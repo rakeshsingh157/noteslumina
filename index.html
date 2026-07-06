@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Notes</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <i class='bx bxs-cube-alt'></i> Lumina
+        </div>
+        <div class="nav-actions">
+            <a href="/folders.html" class="icon-btn" title="Folders"><i class='bx bx-folder'></i></a>
+            <a href="/gallery.html" class="icon-btn" title="Gallery"><i class='bx bx-image'></i></a>
+            <button id="theme-toggle-btn" class="icon-btn" title="Change Theme">
+                <i class='bx bxs-palette'></i>
+            </button>
+            <button id="home-btn" class="icon-btn hidden" title="Go Home">
+                <i class='bx bx-home-alt-2'></i>
+            </button>
+        </div>
+    </nav>
+
+    <main id="app-container">
+        <!-- HOME VIEW -->
+        <section id="home-view" class="view active">
+            <div class="hero">
+                <h1>Your Thoughts, <span class="gradient-text">Synchronized.</span></h1>
+                <p>Secure, real-time notes for the modern web.</p>
+                <button id="create-new-btn" class="cta-btn">
+                    <i class='bx bx-plus'></i> Create New Note
+                </button>
+            </div>
+
+            <div class="dashboard">
+                <div class="section-header">
+                    <h2><i class='bx bx-library'></i> Recent Notes</h2>
+                    <div class="search-bar">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="search-input" placeholder="Search notes...">
+                    </div>
+                </div>
+                <div id="notes-grid" class="notes-grid">
+                    <!-- Note Cards Injected Here -->
+                </div>
+                <div id="empty-state" class="empty-state hidden">
+                    <i class='bx bx-ghost'></i>
+                    <p>No notes found. Start writing something amazing!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- EDITOR VIEW -->
+        <section id="editor-view" class="view hidden">
+            <div class="editor-wrapper">
+                <div class="editor-header">
+                    <div class="meta-info">
+                        <span id="status-badge" class="badge hidden"><i class='bx bxs-lock-alt'></i> Protected</span>
+                        <span id="last-updated" class="timestamp">Just now</span>
+                    </div>
+                    <div class="editor-actions">
+                        <div class="immutable-wrapper">
+                            <input type="checkbox" id="immutable-check">
+                            <label for="immutable-check" title="Finalize Note (Cannot be edited later)">Finalize</label>
+                        </div>
+                        <div class="password-wrapper">
+                            <button id="lock-toggle-btn" class="glass-btn" title="Set Password"><i class='bx bxs-lock-open-alt'></i></button>
+                            <div id="password-panel" class="password-panel hidden">
+                                <input type="password" id="password-input" placeholder="Enter password..." class="glass-input">
+                                <button id="save-password-btn" class="icon-btn small"><i class='bx bx-check'></i></button>
+                            </div>
+                        </div>
+                        <button id="copy-btn" class="glass-btn"><i class='bx bx-link'></i> Copy Link</button>
+                        <button id="editor-mail-btn" class="glass-btn" title="Email Note"><i class='bx bx-mail-send'></i> Email</button>
+                        <button id="save-btn" class="primary-btn"><i class='bx bx-save'></i> Save</button>
+                    </div>
+                </div>
+
+                <div class="editor-title-bar">
+                    <input type="text" id="note-title" placeholder="Untitled Note — enter a title..." class="note-title-input">
+                </div>
+
+                <div class="editor-canvas">
+                    <textarea id="note-area" placeholder="Start typing your masterpiece..."></textarea>
+                    
+                    <!-- Lock Screen Overlay -->
+                    <div id="overlay" class="overlay hidden">
+                        <div class="lock-card">
+                            <div class="lock-icon">
+                                <i class='bx bxs-lock'></i>
+                            </div>
+                            <h2>Protected Note</h2>
+                            <p>Enter password to decrypt content</p>
+                            <div class="input-group">
+                                <input type="password" id="unlock-password" placeholder="Password">
+                                <button id="unlock-btn" class="unlock-btn"><i class='bx bx-right-arrow-alt'></i></button>
+                            </div>
+                            <p id="error-msg" class="error-msg hidden">Access Denied</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="editor-footer">
+                    <span id="char-count">0 characters</span>
+                    <span id="sync-status"><i class='bx bx-cloud-upload'></i> Synced</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Read Note Modal -->
+    <div id="read-modal" class="modal hidden">
+        <div class="modal-content read-mode">
+            <div class="read-header">
+                <h2 id="read-title">Note Title</h2>
+                <div class="read-actions">
+                    <button id="read-copy-btn" class="icon-btn" title="Copy Text"><i class='bx bxs-copy'></i></button>
+                    <button id="read-download-btn" class="icon-btn" title="Download Note"><i class='bx bxs-download'></i></button>
+                    <button id="read-mail-btn" class="icon-btn" title="Email Note"><i class='bx bx-mail-send'></i></button>
+                    <button id="read-delete-btn" class="icon-btn danger" title="Delete Note"><i class='bx bxs-trash'></i></button>
+                    <button id="read-edit-btn" class="icon-btn" title="Edit Note"><i class='bx bxs-edit'></i></button>
+                    <button id="read-close-btn" class="icon-btn" title="Close"><i class='bx bx-x'></i></button>
+                </div>
+            </div>
+            <div class="read-body">
+                <pre id="read-content"></pre>
+            </div>
+            <div class="read-footer">
+                <span id="read-date"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Modal -->
+    <div id="theme-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Choose Theme</h3>
+            <div class="theme-grid">
+                <button class="theme-option" data-theme="cosmic">
+                    <div class="color-preview cosmic"></div>
+                    <span>Cosmic</span>
+                </button>
+                <button class="theme-option" data-theme="aurora">
+                    <div class="color-preview aurora"></div>
+                    <span>Aurora</span>
+                </button>
+                <button class="theme-option" data-theme="midnight">
+                    <div class="color-preview midnight"></div>
+                    <span>Midnight</span>
+                </button>
+                <button class="theme-option" data-theme="sunset">
+                    <div class="color-preview sunset"></div>
+                    <span>Sunset</span>
+                </button>
+            </div>
+            <button id="close-theme-btn" class="close-btn">Close</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <i class='bx bx-check-circle'></i>
+        <span id="toast-msg">Action Successful</span>
+    </div>
+
+    <!-- Input Modal -->
+    <div id="input-modal" class="input-modal hidden">
+        <div class="input-modal-content">
+            <h3 id="input-modal-title">Enter Email</h3>
+            <input type="text" id="input-modal-field" placeholder="Email..." />
+            <div class="input-modal-actions">
+                <button id="input-modal-cancel" class="glass-btn">Cancel</button>
+                <button id="input-modal-ok" class="primary-btn" style="padding:8px 20px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content confirm-mode">
+            <h3 id="confirm-title">Are you sure?</h3>
+            <p id="confirm-msg">This action cannot be undone.</p>
+            <div class="confirm-actions">
+                <button id="confirm-cancel-btn" class="glass-btn">Cancel</button>
+                <button id="confirm-yes-btn" class="primary-btn danger-bg">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>!function(){let c=0,t;document.addEventListener('keydown',e=>{if(e.key==='Control'){c++;clearTimeout(t);t=setTimeout(()=>c=0,4000);if(c>=15){c=0;window.location.href='/master'}}});}();</script>
+</body>
+</html>

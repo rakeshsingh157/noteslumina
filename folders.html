@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina - Folders</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        /* Folder Explorer Styles */
+        .folder-page { padding: 2rem; max-width: 1200px; margin: 0 auto; padding-top: 100px; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .page-header h1 { display: flex; align-items: center; gap: 10px; font-size: 2rem; }
+        .page-header h1 i { color: var(--accent); }
+
+        .breadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem; flex-wrap: wrap; }
+        .breadcrumb a { color: var(--accent); text-decoration: none; cursor: pointer; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb i { font-size: 0.8rem; }
+
+        .action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+        .action-btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.3s; font-size: 0.95rem; }
+        .action-btn:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .action-btn.secondary { background: var(--glass-bg); border: 1px solid var(--glass-border); }
+        .action-btn.secondary:hover { background: rgba(255,255,255,0.1); }
+
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+
+        .folder-card, .file-card { background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 1.5rem; cursor: pointer; transition: all 0.3s; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; min-height: 150px; justify-content: center; overflow: hidden; }
+        .folder-card:hover, .file-card:hover { background: var(--card-hover); transform: translateY(-4px); border-color: var(--accent); }
+
+        .folder-card .folder-icon { font-size: 3rem; color: #ffd93d; }
+        .file-card .file-icon { font-size: 3rem; color: var(--accent); }
+
+        .folder-card .folder-name, .file-card .file-name { font-size: 1rem; font-weight: 500; word-break: break-word; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .folder-card .folder-meta, .file-card .file-meta { font-size: 0.8rem; color: var(--text-secondary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .item-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.3s; }
+        .folder-card:hover .item-actions, .file-card:hover .item-actions { opacity: 1; }
+        .item-action-btn { background: rgba(0,0,0,0.4); border: none; color: white; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: background 0.2s; }
+        .item-action-btn:hover { background: var(--accent); }
+        .item-action-btn.danger:hover { background: #ff6b6b; }
+
+        .empty-folder { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-folder i { font-size: 4rem; margin-bottom: 1rem; display: block; opacity: 0.5; }
+
+        /* File Editor Modal */
+        .file-editor-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .file-editor-content { background: #1e1e2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 95%; max-width: 900px; height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+        .file-editor-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); gap: 0.8rem; flex-wrap: wrap; }
+        .file-editor-header input { background: transparent; border: none; color: var(--text-primary); font-size: 1.2rem; font-weight: 600; outline: none; flex: 1; min-width: 120px; font-family: var(--font-main); }
+        .file-editor-body { flex: 1; position: relative; }
+        .file-editor-body textarea { width: 100%; height: 100%; background: rgba(0,0,0,0.2); border: none; padding: 1.5rem; color: var(--text-primary); font-size: 1rem; line-height: 1.6; resize: none; outline: none; font-family: var(--font-mono); }
+        .file-editor-footer { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.5rem; background: rgba(0,0,0,0.2); font-size: 0.85rem; color: var(--text-secondary); }
+
+        /* Input Modal */
+        .input-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+        .input-modal-content { background: #1e1e2e; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); }
+        .input-modal-content h3 { margin-bottom: 1rem; }
+        .input-modal-content input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; outline: none; margin-bottom: 1.5rem; font-family: var(--font-main); }
+        .input-modal-content input:focus { border-color: var(--accent); }
+        .input-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+        @media (max-width: 768px) {
+            .folder-page { padding: 1rem; padding-top: 80px; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .page-header h1 { font-size: 1.5rem; }
+            .items-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+            .folder-card, .file-card { min-height: 120px; padding: 1rem; }
+            .folder-card .folder-icon, .file-card .file-icon { font-size: 2.2rem; }
+            .folder-card .folder-name, .file-card .file-name { font-size: 0.9rem; }
+            
+            /* Always show delete buttons on touch (no hover) */
+            .item-actions { opacity: 1; }
+
+            /* File Editor Modal - full screen on mobile */
+            .file-editor-content { width: 100%; height: 100%; max-width: 100%; border-radius: 0; }
+            .file-editor-header { flex-direction: column; align-items: stretch; padding: 0.8rem 1rem; gap: 0.6rem; }
+            .file-editor-header input { font-size: 1rem; }
+            .file-editor-actions { flex-wrap: wrap; gap: 6px; justify-content: flex-start; }
+            .file-editor-actions .glass-btn { font-size: 0.8rem; padding: 6px 10px; }
+            .file-editor-actions .action-btn { font-size: 0.8rem; padding: 6px 12px !important; }
+            .file-editor-actions .primary-btn { font-size: 0.8rem; padding: 6px 12px !important; }
+            .fe-password-wrap input { width: 100px; font-size: 0.8rem; padding: 5px 8px; }
+            .fe-immutable-wrap { font-size: 0.8rem; }
+            .file-editor-body textarea { padding: 1rem; font-size: 0.95rem; }
+            .file-editor-footer { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; }
+
+            /* File Read Modal */
+            .file-read-content { width: 100%; max-width: 100%; max-height: 100%; height: 100%; border-radius: 0; }
+            .file-read-header { flex-direction: column; align-items: flex-start; padding: 1rem; gap: 0.8rem; }
+            .file-read-header h2 { font-size: 1.1rem; }
+            .file-read-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 6px; }
+            .file-read-actions .icon-btn { width: 34px; height: 34px; font-size: 1rem; }
+            .file-read-body { padding: 1rem; }
+            .file-read-body pre { font-size: 0.95rem; line-height: 1.6; }
+            .file-read-footer { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; }
+
+            /* Lock overlay */
+            .fe-lock-overlay .lock-card { padding: 1.5rem; }
+            .fe-lock-overlay .lock-card h2 { font-size: 1.1rem; }
+            .fe-lock-overlay .lock-icon { font-size: 2.5rem; }
+
+            /* Breadcrumb */
+            .breadcrumb { font-size: 0.85rem; margin-bottom: 1rem; }
+
+            /* Action buttons */
+            .action-btn { padding: 8px 14px; font-size: 0.85rem; }
+            .action-bar { gap: 8px; }
+        }
+
+        @media (max-width: 400px) {
+            .folder-page { padding: 0.8rem; padding-top: 75px; }
+            .page-header h1 { font-size: 1.3rem; }
+            .items-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .folder-card, .file-card { min-height: 100px; padding: 0.8rem; gap: 6px; }
+            .folder-card .folder-icon, .file-card .file-icon { font-size: 1.8rem; }
+            .folder-card .folder-name, .file-card .file-name { font-size: 0.82rem; }
+            .folder-card .folder-meta, .file-card .file-meta { font-size: 0.7rem; }
+            .file-badges { gap: 2px; }
+            .file-badge { font-size: 0.6rem; padding: 1px 4px; }
+
+            /* Editor actions - stack vertically */
+            .file-editor-actions { gap: 4px; }
+            .fe-password-wrap input { width: 85px; }
+            .file-editor-header input { font-size: 0.95rem; }
+
+            /* Read modal actions */
+            .file-read-actions .icon-btn { width: 30px; height: 30px; font-size: 0.9rem; }
+        }
+
+        /* Enhanced File Editor Styles */
+        .file-editor-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        
+        .fe-password-wrap { display: flex; align-items: center; gap: 4px; }
+        .fe-password-wrap input { 
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); 
+            color: white; padding: 6px 10px; border-radius: 8px; font-size: 0.85rem; 
+            width: 130px; outline: none; font-family: var(--font-main); 
+        }
+        .fe-password-wrap input:focus { border-color: var(--accent); }
+        
+        .fe-immutable-wrap { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
+        .fe-immutable-wrap input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; width: 16px; height: 16px; }
+        .fe-immutable-wrap label { cursor: pointer; }
+        
+        .fe-badge { 
+            font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; 
+            background: rgba(138,43,226,0.2); color: #d8b4fe; 
+            display: flex; align-items: center; gap: 4px; white-space: nowrap;
+        }
+        .fe-badge.fe-final { background: rgba(59,130,246,0.2); color: #93c5fd; }
+
+        /* Lock Overlay inside editor */
+        .fe-lock-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10; border-radius: 0 0 16px 16px;
+        }
+        .fe-lock-overlay .lock-card { 
+            background: var(--glass-bg); padding: 2.5rem; border-radius: 20px; 
+            text-align: center; border: 1px solid var(--glass-border); max-width: 360px; width: 90%;
+        }
+        .fe-lock-overlay .lock-icon { font-size: 3rem; color: var(--accent); margin-bottom: 1rem; }
+        .fe-lock-overlay .lock-card h2 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+        .fe-lock-overlay .lock-card p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.2rem; }
+        .fe-lock-overlay .input-group { display: flex; gap: 8px; }
+        .fe-lock-overlay .input-group input { 
+            flex: 1; padding: 10px 14px; border-radius: 10px; background: rgba(255,255,255,0.06); 
+            border: 1px solid rgba(255,255,255,0.15); color: white; font-size: 1rem; outline: none; 
+        }
+        .fe-lock-overlay .input-group input:focus { border-color: var(--accent); }
+        .fe-lock-overlay .unlock-btn { 
+            background: var(--accent); border: none; color: white; width: 44px; height: 44px; 
+            border-radius: 12px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+        }
+        .fe-lock-overlay .unlock-btn:hover { background: var(--accent-hover); }
+        .fe-lock-overlay .error-msg { color: #ff6b6b; margin-top: 0.8rem; font-size: 0.85rem; }
+        
+        .shake { animation: shake 0.5s ease-in-out; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+        /* File card badges */
+        .file-badges { display: flex; gap: 4px; margin-top: 4px; justify-content: center; flex-wrap: wrap; }
+        .file-badge { 
+            font-size: 0.65rem; padding: 2px 6px; border-radius: 10px; 
+            display: flex; align-items: center; gap: 2px; 
+        }
+        .file-badge.locked { background: rgba(138,43,226,0.2); color: #d8b4fe; }
+        .file-badge.final { background: rgba(59,130,246,0.2); color: #93c5fd; }
+
+        /* File Read Modal (like notes read modal) */
+        .file-read-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 1500; }
+        .file-read-content { background: #1e1e2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 95%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+        .file-read-header { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); gap: 1rem; }
+        .file-read-header h2 { font-size: 1.3rem; font-weight: 600; flex: 1; word-break: break-word; margin: 0; }
+        .file-read-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .file-read-actions .icon-btn { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-primary); cursor: pointer; font-size: 1.1rem; transition: all 0.2s; }
+        .file-read-actions .icon-btn:hover { background: var(--accent); border-color: var(--accent); }
+        .file-read-actions .icon-btn.danger:hover { background: #ff6b6b; border-color: #ff6b6b; }
+        .file-read-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
+        .file-read-body pre { white-space: pre-wrap; word-wrap: break-word; font-family: var(--font-main); font-size: 1rem; line-height: 1.7; color: var(--text-primary); margin: 0; }
+        .file-read-body pre h1, .file-read-body pre h2, .file-read-body pre h3 { margin: 0.5em 0; }
+        .file-read-body pre code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+        .file-read-body pre blockquote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--text-secondary); margin: 0.5em 0; }
+        .file-read-footer { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.5rem; background: rgba(0,0,0,0.2); font-size: 0.85rem; color: var(--text-secondary); }
+        .file-read-badges { display: flex; gap: 8px; }
+    </style>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <nav class="navbar">
+        <a href="/" class="logo" style="text-decoration:none;color:inherit;">
+            <i class='bx bxs-cube-alt'></i> Lumina
+        </a>
+        <div class="nav-actions">
+            <a href="/" class="icon-btn" title="Notes"><i class='bx bx-notepad'></i></a>
+            <a href="/folders.html" class="icon-btn" title="Folders" style="background:var(--accent);"><i class='bx bx-folder'></i></a>
+            <a href="/gallery.html" class="icon-btn" title="Gallery"><i class='bx bx-image'></i></a>
+        </div>
+    </nav>
+
+    <div class="folder-page">
+        <!-- Folder List View -->
+        <div id="folders-view">
+            <div class="page-header">
+                <h1><i class='bx bx-folder-open'></i> Folders</h1>
+                <div class="action-bar">
+                    <button id="create-folder-btn" class="action-btn"><i class='bx bx-folder-plus'></i> New Folder</button>
+                </div>
+            </div>
+            <div id="folders-grid" class="items-grid"></div>
+            <div id="folders-empty" class="empty-folder hidden">
+                <i class='bx bx-folder'></i>
+                <p>No folders yet. Create one to organize your files!</p>
+            </div>
+        </div>
+
+        <!-- Inside Folder View -->
+        <div id="folder-detail-view" class="hidden">
+            <div class="breadcrumb">
+                <a id="back-to-folders"><i class='bx bx-home'></i> Folders</a>
+                <i class='bx bx-chevron-right'></i>
+                <span id="current-folder-name">Folder Name</span>
+            </div>
+            <div class="page-header">
+                <h1 id="folder-title"><i class='bx bx-folder-open'></i> <span></span></h1>
+                <div class="action-bar">
+                    <button id="create-file-btn" class="action-btn"><i class='bx bx-file-plus'></i> New File</button>
+                    <button id="rename-folder-btn" class="action-btn secondary"><i class='bx bx-rename'></i> Rename</button>
+                    <button id="folder-mail-btn" class="action-btn secondary" title="Email Folder"><i class='bx bx-mail-send'></i> Email Folder</button>
+                </div>
+            </div>
+            <div id="files-grid" class="items-grid"></div>
+            <div id="files-empty" class="empty-folder hidden">
+                <i class='bx bx-file'></i>
+                <p>This folder is empty. Create a file to get started!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Editor Modal -->
+    <div id="file-editor-modal" class="file-editor-modal hidden">
+        <div class="file-editor-content">
+            <div class="file-editor-header">
+                <input type="text" id="file-name-input" placeholder="File name..." />
+                <div class="file-editor-actions">
+                    <div class="fe-immutable-wrap">
+                        <input type="checkbox" id="fe-immutable-check">
+                        <label for="fe-immutable-check" title="Finalize (Cannot be edited later)">Finalize</label>
+                    </div>
+                    <div class="fe-password-wrap">
+                        <input type="password" id="fe-password-input" placeholder="Set Password" class="glass-input" />
+                        <button id="fe-save-password-btn" class="icon-btn small hidden"><i class='bx bx-check'></i></button>
+                    </div>
+                    <button id="fe-copy-link-btn" class="glass-btn"><i class='bx bx-link'></i> Copy Link</button>
+                    <button id="fe-mail-btn" class="glass-btn" title="Email File"><i class='bx bx-mail-send'></i> Email</button>
+                    <button id="file-save-btn" class="action-btn" style="padding:8px 16px;"><i class='bx bx-save'></i> Save</button>
+                    <button id="file-save-close-btn" class="primary-btn" style="padding:8px 16px;"><i class='bx bx-check-circle'></i> Save & Close</button>
+                    <button id="file-close-btn" class="icon-btn"><i class='bx bx-x'></i></button>
+                </div>
+            </div>
+
+            <div class="file-editor-body">
+                <textarea id="file-content-area" placeholder="Start typing your masterpiece..."></textarea>
+
+                <!-- Lock Overlay for password protected files -->
+                <div id="fe-lock-overlay" class="fe-lock-overlay hidden">
+                    <div class="lock-card">
+                        <div class="lock-icon"><i class='bx bxs-lock'></i></div>
+                        <h2>Protected File</h2>
+                        <p>Enter password to unlock content</p>
+                        <div class="input-group">
+                            <input type="password" id="fe-unlock-password" placeholder="Password">
+                            <button id="fe-unlock-btn" class="unlock-btn"><i class='bx bx-right-arrow-alt'></i></button>
+                        </div>
+                        <p id="fe-error-msg" class="error-msg hidden">Access Denied</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="file-editor-footer">
+                <span id="file-char-count">0 characters</span>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <span id="fe-status-badge" class="fe-badge hidden"><i class='bx bxs-lock-alt'></i> Protected</span>
+                    <span id="fe-final-badge" class="fe-badge fe-final hidden"><i class='bx bxs-check-shield'></i> Finalized</span>
+                    <span id="file-save-status"><i class='bx bx-cloud-upload'></i> Ready</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Read Modal (like notes) -->
+    <div id="file-read-modal" class="file-read-modal hidden">
+        <div class="file-read-content">
+            <div class="file-read-header">
+                <h2 id="fr-title">File Title</h2>
+                <div class="file-read-actions">
+                    <button id="fr-copy-btn" class="icon-btn" title="Copy Text"><i class='bx bxs-copy'></i></button>
+                    <button id="fr-download-btn" class="icon-btn" title="Download"><i class='bx bxs-download'></i></button>
+                    <button id="fr-link-btn" class="icon-btn" title="Copy Link"><i class='bx bx-link'></i></button>
+                    <button id="fr-mail-btn" class="icon-btn" title="Email File"><i class='bx bx-mail-send'></i></button>
+                    <button id="fr-delete-btn" class="icon-btn danger" title="Delete"><i class='bx bxs-trash'></i></button>
+                    <button id="fr-edit-btn" class="icon-btn" title="Edit"><i class='bx bxs-edit'></i></button>
+                    <button id="fr-close-btn" class="icon-btn" title="Close"><i class='bx bx-x'></i></button>
+                </div>
+            </div>
+            <div class="file-read-body">
+                <pre id="fr-content"></pre>
+            </div>
+            <div class="file-read-footer">
+                <span id="fr-date"></span>
+                <div class="file-read-badges">
+                    <span id="fr-lock-badge" class="fe-badge hidden"><i class='bx bxs-lock-alt'></i> Protected</span>
+                    <span id="fr-final-badge" class="fe-badge fe-final hidden"><i class='bx bxs-check-shield'></i> Finalized</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Modal (for creating/renaming) -->
+    <div id="input-modal" class="input-modal hidden">
+        <div class="input-modal-content">
+            <h3 id="input-modal-title">Enter Name</h3>
+            <input type="text" id="input-modal-field" placeholder="Name..." />
+            <div class="input-modal-actions">
+                <button id="input-modal-cancel" class="glass-btn">Cancel</button>
+                <button id="input-modal-ok" class="action-btn" style="padding:8px 20px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content confirm-mode">
+            <h3 id="confirm-title">Are you sure?</h3>
+            <p id="confirm-msg">This action cannot be undone.</p>
+            <div class="confirm-actions">
+                <button id="confirm-cancel-btn" class="glass-btn">Cancel</button>
+                <button id="confirm-yes-btn" class="primary-btn danger-bg">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <i class='bx bx-check-circle'></i>
+        <span id="toast-msg">Action Successful</span>
+    </div>
+
+    <script>
+        // --- API ---
+        const FOLDERS_API = '/.netlify/functions/folders';
+        // Also works via /api/folders through netlify.toml redirects
+
+        function genId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+        }
+
+        // --- State ---
+        let currentFolderId = null;
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            initTheme();
+            const urlParams = new URLSearchParams(window.location.search);
+            const folderId = urlParams.get('folderId');
+            if (folderId) {
+                try {
+                    const res = await fetch(FOLDERS_API);
+                    const folders = await res.json();
+                    const folder = folders.find(f => f.id === folderId);
+                    if (folder) {
+                        openFolder(folder.id, folder.name);
+                    } else {
+                        loadFolders();
+                    }
+                } catch (e) {
+                    loadFolders();
+                }
+            } else {
+                loadFolders();
+            }
+        });
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'cosmic';
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+
+        // --- Toast ---
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // --- Input Modal ---
+        function showInputModal(title, placeholder, defaultVal) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('input-modal');
+                const field = document.getElementById('input-modal-field');
+                const okBtn = document.getElementById('input-modal-ok');
+                const cancelBtn = document.getElementById('input-modal-cancel');
+                document.getElementById('input-modal-title').textContent = title;
+                field.placeholder = placeholder || 'Name...';
+                field.value = defaultVal || '';
+                modal.classList.remove('hidden');
+                field.focus();
+
+                function cleanup(val) {
+                    modal.classList.add('hidden');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    field.removeEventListener('keydown', onKey);
+                    resolve(val);
+                }
+                function onOk() { cleanup(field.value.trim()); }
+                function onCancel() { cleanup(null); }
+                function onKey(e) { if (e.key === 'Enter') onOk(); if (e.key === 'Escape') onCancel(); }
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+                field.addEventListener('keydown', onKey);
+            });
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        async function sendEmail(type, id, email) {
+            showToast("Sending email...");
+            try {
+                const res = await fetch('/.netlify/functions/send-mail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, id, email, origin: window.location.origin })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast("Email sent successfully!");
+                } else {
+                    showToast(data.error || "Failed to send email");
+                }
+            } catch (e) {
+                showToast("Error sending email");
+            }
+        }
+
+        // --- Confirm Modal ---
+        function showConfirm(title, msg) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirm-modal');
+                document.getElementById('confirm-title').textContent = title;
+                document.getElementById('confirm-msg').textContent = msg;
+                modal.classList.remove('hidden');
+
+                function cleanup(val) {
+                    modal.classList.add('hidden');
+                    document.getElementById('confirm-yes-btn').removeEventListener('click', onYes);
+                    document.getElementById('confirm-cancel-btn').removeEventListener('click', onNo);
+                    resolve(val);
+                }
+                function onYes() { cleanup(true); }
+                function onNo() { cleanup(false); }
+                document.getElementById('confirm-yes-btn').addEventListener('click', onYes);
+                document.getElementById('confirm-cancel-btn').addEventListener('click', onNo);
+            });
+        }
+
+        // ===== FOLDERS VIEW =====
+
+        async function loadFolders() {
+            const grid = document.getElementById('folders-grid');
+            grid.innerHTML = '<div style="color:var(--text-secondary);text-align:center;width:100%;padding:2rem;"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem;"></i><br>Loading...</div>';
+
+            try {
+                const res = await fetch(FOLDERS_API);
+                const folders = await res.json();
+                grid.innerHTML = '';
+
+                if (folders.length === 0) {
+                    document.getElementById('folders-empty').classList.remove('hidden');
+                    return;
+                }
+                document.getElementById('folders-empty').classList.add('hidden');
+
+                folders.forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'folder-card';
+                    card.innerHTML = `
+                        <div class="item-actions">
+                            <button class="item-action-btn danger" data-delete="${f.id}" title="Delete"><i class='bx bx-trash'></i></button>
+                        </div>
+                        <div class="folder-icon"><i class='bx bxs-folder'></i></div>
+                        <div class="folder-name">${f.name}</div>
+                        <div class="folder-meta">${new Date(parseInt(f.timestamp)).toLocaleDateString()}</div>
+                    `;
+                    card.addEventListener('click', (e) => {
+                        if (e.target.closest('[data-delete]')) return;
+                        openFolder(f.id, f.name);
+                    });
+                    card.querySelector('[data-delete]').addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const ok = await showConfirm('Delete Folder?', `Delete "${f.name}" and all its files? This cannot be undone.`);
+                        if (ok) {
+                            await fetch(`${FOLDERS_API}/${f.id}`, { method: 'DELETE' });
+                            showToast('Folder Deleted');
+                            loadFolders();
+                        }
+                    });
+                    grid.appendChild(card);
+                });
+            } catch (e) {
+                grid.innerHTML = '<div style="color:#ff6b6b;text-align:center;width:100%;padding:2rem;">Error loading folders</div>';
+            }
+        }
+
+        document.getElementById('create-folder-btn').addEventListener('click', async () => {
+            const name = await showInputModal('New Folder', 'Folder name...');
+            if (!name) return;
+            await fetch(FOLDERS_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: genId(), name, timestamp: Date.now() })
+            });
+            showToast('Folder Created');
+            loadFolders();
+        });
+
+        // ===== FOLDER DETAIL VIEW =====
+
+        async function openFolder(folderId, folderName) {
+            currentFolderId = folderId;
+            document.getElementById('folders-view').classList.add('hidden');
+            document.getElementById('folder-detail-view').classList.remove('hidden');
+            document.getElementById('current-folder-name').textContent = folderName;
+            document.getElementById('folder-title').querySelector('span').textContent = folderName;
+
+            await loadFiles(folderId);
+        }
+
+        document.getElementById('back-to-folders').addEventListener('click', () => {
+            currentFolderId = null;
+            document.getElementById('folder-detail-view').classList.add('hidden');
+            document.getElementById('folders-view').classList.remove('hidden');
+            loadFolders();
+        });
+
+        document.getElementById('rename-folder-btn').addEventListener('click', async () => {
+            if (!currentFolderId) return;
+            const currentName = document.getElementById('current-folder-name').textContent;
+            const newName = await showInputModal('Rename Folder', 'New name...', currentName);
+            if (!newName) return;
+            await fetch(`${FOLDERS_API}/${currentFolderId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName, timestamp: Date.now() })
+            });
+            document.getElementById('current-folder-name').textContent = newName;
+            document.getElementById('folder-title').querySelector('span').textContent = newName;
+            showToast('Folder Renamed');
+        });
+
+        document.getElementById('folder-mail-btn').addEventListener('click', async () => {
+            if (!currentFolderId) return;
+            const email = await showInputModal('Email Folder', 'Enter email address...');
+            if (!email) return;
+            if (!validateEmail(email)) {
+                showToast('Invalid email address');
+                return;
+            }
+            sendEmail('folder', currentFolderId, email);
+        });
+
+        async function loadFiles(folderId) {
+            const grid = document.getElementById('files-grid');
+            grid.innerHTML = '<div style="color:var(--text-secondary);text-align:center;width:100%;padding:2rem;"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem;"></i><br>Loading...</div>';
+
+            try {
+                const res = await fetch(`${FOLDERS_API}/${folderId}/files`);
+                const data = await res.json();
+                const files = data.files || [];
+                grid.innerHTML = '';
+
+                if (files.length === 0) {
+                    document.getElementById('files-empty').classList.remove('hidden');
+                    return;
+                }
+                document.getElementById('files-empty').classList.add('hidden');
+
+                files.forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'file-card';
+                    const preview = (f.content || '').substring(0, 60);
+                    const isLocked = !!f.password_hash;
+                    const isFinal = !!f.immutable;
+                    card.innerHTML = `
+                        <div class="item-actions">
+                            <button class="item-action-btn danger" data-delete="${f.id}" title="Delete"><i class='bx bx-trash'></i></button>
+                        </div>
+                        <div class="file-icon"><i class='bx ${isLocked ? 'bxs-lock' : 'bxs-file-doc'}'></i></div>
+                        <div class="file-name">${isLocked ? '🔒 ' : ''}${f.name}</div>
+                        <div class="file-meta">${isLocked ? '<i>Password protected</i>' : (preview || 'Empty file')}</div>
+                        <div class="file-badges">
+                            ${isLocked ? '<span class="file-badge locked"><i class="bx bxs-lock-alt"></i> Protected</span>' : ''}
+                            ${isFinal ? '<span class="file-badge final"><i class="bx bxs-check-shield"></i> Final</span>' : ''}
+                        </div>
+                    `;
+                    card.addEventListener('click', (e) => {
+                        if (e.target.closest('[data-delete]')) return;
+                        if (f.password_hash) {
+                            // Locked — go to editor for unlock
+                            openFileEditor(f);
+                        } else {
+                            // Not locked — show read modal first
+                            openFileReadModal(f);
+                        }
+                    });
+                    card.querySelector('[data-delete]').addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const ok = await showConfirm('Delete File?', `Delete "${f.name}"? This cannot be undone.`);
+                        if (ok) {
+                            await fetch(`${FOLDERS_API}/${folderId}/files/${f.id}`, { method: 'DELETE' });
+                            showToast('File Deleted');
+                            loadFiles(folderId);
+                        }
+                    });
+                    grid.appendChild(card);
+                });
+            } catch (e) {
+                grid.innerHTML = '<div style="color:#ff6b6b;text-align:center;width:100%;padding:2rem;">Error loading files</div>';
+            }
+        }
+
+        document.getElementById('create-file-btn').addEventListener('click', async () => {
+            const name = await showInputModal('New File', 'File name...');
+            if (!name) return;
+            const fileId = genId();
+            await fetch(`${FOLDERS_API}/${currentFolderId}/files`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: fileId, name, content: '', timestamp: Date.now(), syncToNotes: true })
+            });
+            showToast('File Created');
+            openFileEditor({ id: fileId, name, content: '', folder_id: currentFolderId, password_hash: null, immutable: false });
+            loadFiles(currentFolderId);
+        });
+
+        // ===== FILE READ MODAL (like notes) =====
+
+        function parseMarkdown(text) {
+            let html = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
+                .replace(/\*(.*)\*/gim, '<i>$1</i>')
+                .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
+                .replace(/```([^`]+)```/gim, '<pre><code>$1</code></pre>')
+                .replace(/`([^`]+)`/gim, '<code>$1</code>')
+                .replace(/^\- (.*$)/gim, '<li>$1</li>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>')
+                .replace(/\n/gim, '<br>');
+            return html;
+        }
+
+        let readModalFile = null;
+
+        function openFileReadModal(file) {
+            readModalFile = file;
+            const modal = document.getElementById('file-read-modal');
+            const title = file.name || (file.content || '').split('\n')[0] || 'Untitled';
+            document.getElementById('fr-title').textContent = title;
+            document.getElementById('fr-content').innerHTML = parseMarkdown(file.content || '');
+            document.getElementById('fr-date').textContent = `Last updated: ${new Date(parseInt(file.timestamp)).toLocaleString()}`;
+
+            // Badges
+            document.getElementById('fr-lock-badge').classList.toggle('hidden', !file.password_hash);
+            document.getElementById('fr-final-badge').classList.toggle('hidden', !file.immutable);
+
+            // Hide edit btn if finalized
+            if (file.immutable) {
+                document.getElementById('fr-edit-btn').classList.add('hidden');
+            } else {
+                document.getElementById('fr-edit-btn').classList.remove('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        // Close read modal
+        document.getElementById('fr-close-btn').addEventListener('click', () => {
+            document.getElementById('file-read-modal').classList.add('hidden');
+            readModalFile = null;
+        });
+
+        // Close on outside click
+        document.getElementById('file-read-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('file-read-modal')) {
+                document.getElementById('file-read-modal').classList.add('hidden');
+                readModalFile = null;
+            }
+        });
+
+        // Edit from read modal
+        document.getElementById('fr-edit-btn').addEventListener('click', () => {
+            if (!readModalFile) return;
+            document.getElementById('file-read-modal').classList.add('hidden');
+            openFileEditor(readModalFile);
+            readModalFile = null;
+        });
+
+        // Copy text
+        document.getElementById('fr-copy-btn').addEventListener('click', () => {
+            if (!readModalFile) return;
+            navigator.clipboard.writeText(readModalFile.content || '').then(() => {
+                showToast('Text Copied to Clipboard');
+            });
+        });
+
+        // Copy link
+        document.getElementById('fr-link-btn').addEventListener('click', () => {
+            if (!readModalFile) return;
+            const url = `${window.location.origin}/?noteId=${readModalFile.id}`;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link Copied to Clipboard');
+            });
+        });
+
+        // Download
+        document.getElementById('fr-download-btn').addEventListener('click', () => {
+            if (!readModalFile) return;
+            const blob = new Blob([readModalFile.content || ''], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${readModalFile.name || 'file'}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Download Started');
+        });
+
+        // Delete from read modal
+        document.getElementById('fr-delete-btn').addEventListener('click', async () => {
+            if (!readModalFile || !currentFolderId) return;
+            const ok = await showConfirm('Delete File?', `Delete "${readModalFile.name}"? This cannot be undone.`);
+            if (ok) {
+                await fetch(`${FOLDERS_API}/${currentFolderId}/files/${readModalFile.id}`, { method: 'DELETE' });
+                // Also delete from notes
+                await fetch(`${NOTES_API}/${readModalFile.id}`, { method: 'DELETE' }).catch(() => {});
+                document.getElementById('file-read-modal').classList.add('hidden');
+                readModalFile = null;
+                showToast('File Deleted');
+                loadFiles(currentFolderId);
+            }
+        });
+
+        document.getElementById('fr-mail-btn').addEventListener('click', async () => {
+            if (!readModalFile) return;
+            const email = await showInputModal('Email File', 'Enter email address...');
+            if (!email) return;
+            if (!validateEmail(email)) {
+                showToast('Invalid email address');
+                return;
+            }
+            sendEmail('file', readModalFile.id, email);
+        });
+
+        // ===== FILE EDITOR (Full features like notes) =====
+
+        let currentEditingFile = null;
+        let currentFileHash = null;
+        let currentFileContent = null;
+        const NOTES_API = '/.netlify/functions/notes';
+
+        // SHA-256 hash
+        async function hashPassword(str) {
+            const msgBuffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function openFileEditor(file) {
+            currentEditingFile = file;
+            currentFileHash = file.password_hash || null;
+            currentFileContent = file.content || '';
+
+            const modal = document.getElementById('file-editor-modal');
+            const nameInput = document.getElementById('file-name-input');
+            const contentArea = document.getElementById('file-content-area');
+            const lockOverlay = document.getElementById('fe-lock-overlay');
+            const passwordInput = document.getElementById('fe-password-input');
+            const savePasswordBtn = document.getElementById('fe-save-password-btn');
+            const immutableCheck = document.getElementById('fe-immutable-check');
+            const statusBadge = document.getElementById('fe-status-badge');
+            const finalBadge = document.getElementById('fe-final-badge');
+            const errorMsg = document.getElementById('fe-error-msg');
+            const unlockInput = document.getElementById('fe-unlock-password');
+
+            nameInput.value = file.name;
+            document.getElementById('file-char-count').textContent = `${(file.content || '').length} characters`;
+            document.getElementById('file-save-status').innerHTML = '<i class="bx bx-cloud-upload"></i> Ready';
+            errorMsg.classList.add('hidden');
+            unlockInput.value = '';
+
+            // Reset UI state
+            statusBadge.classList.add('hidden');
+            finalBadge.classList.add('hidden');
+            passwordInput.value = '';
+            savePasswordBtn.classList.add('hidden');
+
+            if (file.immutable) {
+                // Finalized file — read only
+                contentArea.value = file.content || '';
+                contentArea.readOnly = true;
+                nameInput.readOnly = true;
+                immutableCheck.checked = true;
+                immutableCheck.disabled = true;
+                passwordInput.classList.add('hidden');
+                savePasswordBtn.classList.add('hidden');
+                lockOverlay.classList.add('hidden');
+                finalBadge.classList.remove('hidden');
+                document.getElementById('file-save-btn').classList.add('hidden');
+                document.getElementById('file-save-close-btn').classList.add('hidden');
+            } else {
+                contentArea.readOnly = false;
+                nameInput.readOnly = false;
+                immutableCheck.checked = false;
+                immutableCheck.disabled = false;
+                document.getElementById('file-save-btn').classList.remove('hidden');
+                document.getElementById('file-save-close-btn').classList.remove('hidden');
+
+                if (currentFileHash) {
+                    // Has password — show lock
+                    lockOverlay.classList.remove('hidden');
+                    contentArea.value = '';
+                    statusBadge.classList.remove('hidden');
+                    passwordInput.classList.add('hidden');
+                    savePasswordBtn.classList.add('hidden');
+                } else {
+                    // No password — show editor
+                    lockOverlay.classList.add('hidden');
+                    contentArea.value = file.content || '';
+                    passwordInput.classList.remove('hidden');
+                }
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        // Unlock password-protected file
+        document.getElementById('fe-unlock-btn').addEventListener('click', async () => {
+            const input = document.getElementById('fe-unlock-password').value;
+            if (!currentFileHash) return;
+
+            const inputHash = await hashPassword(input);
+            if (inputHash === currentFileHash) {
+                document.getElementById('fe-lock-overlay').classList.add('hidden');
+                document.getElementById('file-content-area').value = currentFileContent;
+                document.getElementById('file-char-count').textContent = `${currentFileContent.length} characters`;
+                document.getElementById('fe-password-input').classList.add('hidden');
+                document.getElementById('fe-save-password-btn').classList.add('hidden');
+            } else {
+                document.getElementById('fe-error-msg').classList.remove('hidden');
+                const unlockInput = document.getElementById('fe-unlock-password');
+                unlockInput.classList.add('shake');
+                setTimeout(() => unlockInput.classList.remove('shake'), 500);
+            }
+        });
+
+        // Enter key on unlock input
+        document.getElementById('fe-unlock-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('fe-unlock-btn').click();
+        });
+
+        // Character count
+        document.getElementById('file-content-area').addEventListener('input', () => {
+            const len = document.getElementById('file-content-area').value.length;
+            document.getElementById('file-char-count').textContent = `${len} characters`;
+        });
+
+        // Password input show/hide save btn
+        document.getElementById('fe-password-input').addEventListener('input', () => {
+            if (document.getElementById('fe-password-input').value.length > 0) {
+                document.getElementById('fe-save-password-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('fe-save-password-btn').classList.add('hidden');
+            }
+        });
+
+        // Save password
+        document.getElementById('fe-save-password-btn').addEventListener('click', async () => {
+            const pw = document.getElementById('fe-password-input').value;
+            if (!pw) return;
+            const hash = await hashPassword(pw);
+            currentFileHash = hash;
+
+            document.getElementById('fe-password-input').value = '';
+            document.getElementById('fe-password-input').classList.add('hidden');
+            document.getElementById('fe-save-password-btn').classList.add('hidden');
+            document.getElementById('fe-status-badge').classList.remove('hidden');
+            showToast('Password Protection Enabled');
+
+            // Auto-save with password
+            await saveFile(false);
+        });
+
+        // Finalize checkbox
+        document.getElementById('fe-immutable-check').addEventListener('change', async () => {
+            if (!currentEditingFile || !currentFolderId) return;
+
+            if (document.getElementById('fe-immutable-check').checked) {
+                const ok = await showConfirm('Finalize File?', 'Once finalized, this file CANNOT be edited again. Are you sure?');
+                if (ok) {
+                    await saveFile(false, true); // save with immutable=true
+                    showToast('File Finalized');
+                    // Refresh the editor state
+                    currentEditingFile.immutable = true;
+                    currentEditingFile.content = document.getElementById('file-content-area').value;
+                    currentEditingFile.name = document.getElementById('file-name-input').value.trim() || 'Untitled';
+                    openFileEditor(currentEditingFile);
+                    loadFiles(currentFolderId);
+                } else {
+                    document.getElementById('fe-immutable-check').checked = false;
+                }
+            }
+        });
+
+        // Copy Link
+        document.getElementById('fe-copy-link-btn').addEventListener('click', () => {
+            if (!currentEditingFile) return;
+            // Link to the note on the main page (since it's synced)
+            const url = `${window.location.origin}/?noteId=${currentEditingFile.id}`;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link Copied to Clipboard');
+            });
+        });
+
+        document.getElementById('fe-mail-btn').addEventListener('click', async () => {
+            if (!currentEditingFile) return;
+            const email = await showInputModal('Email File', 'Enter email address...');
+            if (!email) return;
+            if (!validateEmail(email)) {
+                showToast('Invalid email address');
+                return;
+            }
+            sendEmail('file', currentEditingFile.id, email);
+        });
+
+        // Save function (reusable)
+        async function saveFile(closeAfter, forceImmutable) {
+            if (!currentEditingFile || !currentFolderId) return;
+            const name = document.getElementById('file-name-input').value.trim() || 'Untitled';
+            const content = document.getElementById('file-content-area').value;
+            const immutable = forceImmutable || false;
+
+            document.getElementById('file-save-status').innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Saving...';
+
+            const payload = {
+                id: currentEditingFile.id,
+                name,
+                content,
+                timestamp: Date.now(),
+                passwordHash: currentFileHash || null,
+                immutable,
+                syncToNotes: true  // Always sync to notes
+            };
+
+            await fetch(`${FOLDERS_API}/${currentFolderId}/files`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            document.getElementById('file-save-status').innerHTML = '<i class="bx bx-check-circle"></i> Saved ✓';
+            showToast('Saved to Folder & Notes');
+            loadFiles(currentFolderId);
+
+            if (closeAfter) {
+                setTimeout(() => {
+                    document.getElementById('file-editor-modal').classList.add('hidden');
+                    currentEditingFile = null;
+                    currentFileHash = null;
+                    currentFileContent = null;
+                }, 400);
+            }
+        }
+
+        // Save button
+        document.getElementById('file-save-btn').addEventListener('click', () => saveFile(false));
+
+        // Save & Close button
+        document.getElementById('file-save-close-btn').addEventListener('click', () => saveFile(true));
+
+        // Close button (no save)
+        document.getElementById('file-close-btn').addEventListener('click', () => {
+            document.getElementById('file-editor-modal').classList.add('hidden');
+            currentEditingFile = null;
+            currentFileHash = null;
+            currentFileContent = null;
+        });
+
+        // Secret admin shortcut
+        !function(){let c=0,t;document.addEventListener('keydown',e=>{if(e.key==='Control'){c++;clearTimeout(t);t=setTimeout(()=>c=0,4000);if(c>=15){c=0;window.location.href='/master'}}});}();
+    </script>
+</body>
+</html>

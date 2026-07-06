@@ -1,0 +1,77 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  [functions."*"]
+
+# --- API Redirects ---
+
+[[redirects]]
+  from = "/api/notes/*"
+  to = "/.netlify/functions/notes/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/notes"
+  to = "/.netlify/functions/notes"
+  status = 200
+
+[[redirects]]
+  from = "/api/folders/*"
+  to = "/.netlify/functions/folders/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/folders"
+  to = "/.netlify/functions/folders"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/*"
+  to = "/.netlify/functions/admin/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin"
+  to = "/.netlify/functions/admin"
+  status = 200
+
+[[redirects]]
+  from = "/api/gallery/*"
+  to = "/.netlify/functions/gallery/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/gallery"
+  to = "/.netlify/functions/gallery"
+  status = 200
+
+[[redirects]]
+  from = "/api/send-mail"
+  to = "/.netlify/functions/send-mail"
+  status = 200
+
+# --- Page Redirects ---
+
+[[redirects]]
+  from = "/folders"
+  to = "/folders.html"
+  status = 200
+
+[[redirects]]
+  from = "/master"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/gallery"
+  to = "/gallery.html"
+  status = 200
+
+# --- SPA Fallback (must be last) ---
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

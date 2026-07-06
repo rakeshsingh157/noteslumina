@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina - Gallery</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        .gallery-page { padding: 2rem; max-width: 1200px; margin: 0 auto; padding-top: 100px; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .page-header h1 { display: flex; align-items: center; gap: 10px; font-size: 2rem; }
+        .page-header h1 i { color: var(--accent); }
+
+        .action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+        .action-btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: all 0.3s; font-size: 0.95rem; }
+        .action-btn:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        /* Gallery stats */
+        .gallery-stats { display: flex; gap: 16px; margin-bottom: 2rem; flex-wrap: wrap; }
+        .stat-pill { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+        .stat-pill i { color: var(--accent); }
+
+        /* Upload area */
+        .upload-zone { 
+            border: 2px dashed var(--glass-border); border-radius: 16px; padding: 3rem 2rem;
+            text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 2rem;
+            background: var(--glass-bg); position: relative; overflow: hidden;
+        }
+        .upload-zone:hover, .upload-zone.dragover { 
+            border-color: var(--accent); background: rgba(138,43,226,0.05); 
+            transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .upload-zone i.upload-icon { font-size: 3rem; color: var(--accent); margin-bottom: 0.8rem; display: block; }
+        .upload-zone h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text-primary); }
+        .upload-zone p { color: var(--text-secondary); font-size: 0.85rem; }
+        .upload-zone input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .upload-zone.uploading { pointer-events: none; opacity: 0.7; }
+
+        /* Upload options panel (shown after file selected) */
+        .upload-options {
+            display: none; margin-bottom: 2rem; background: var(--card-bg); border: 1px solid var(--glass-border);
+            border-radius: 16px; padding: 1.5rem; text-align: left;
+        }
+        .upload-options.active { display: block; }
+        .upload-preview { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; }
+        .upload-preview img { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; border: 1px solid var(--glass-border); }
+        .upload-preview-info { flex: 1; min-width: 150px; }
+        .upload-preview-info .name { font-weight: 600; font-size: 0.95rem; word-break: break-all; }
+        .upload-preview-info .meta { color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px; }
+        .upload-opt-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+        .upload-opt-item { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.2); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--glass-border); }
+        .upload-opt-item label { font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
+        .upload-opt-item input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+        .upload-pw-field { margin-top: 0.8rem; display: none; }
+        .upload-pw-field.active { display: block; }
+        .upload-pw-field input { width: 100%; max-width: 300px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; font-size: 0.95rem; outline: none; }
+        .upload-pw-field input:focus { border-color: var(--accent); }
+        .upload-actions { display: flex; gap: 10px; margin-top: 1.2rem; }
+
+        /* Upload progress */
+        .upload-progress { display: none; margin-bottom: 1.5rem; }
+        .upload-progress.active { display: block; }
+        .progress-bar-wrap { background: var(--glass-bg); border-radius: 10px; height: 8px; overflow: hidden; border: 1px solid var(--glass-border); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #a78bfa); border-radius: 10px; transition: width 0.3s; width: 0%; }
+        .progress-text { text-align: center; font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px; }
+
+        /* Gallery Grid - Masonry style */
+        .gallery-grid { 
+            columns: 4 250px; column-gap: 16px;
+        }
+        .gallery-item {
+            break-inside: avoid; margin-bottom: 16px; border-radius: 14px; overflow: hidden;
+            background: var(--card-bg); border: 1px solid var(--glass-border); 
+            transition: all 0.3s; cursor: pointer; position: relative;
+        }
+        .gallery-item:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .gallery-item img { width: 100%; display: block; }
+        .gallery-item-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0; 
+            background: linear-gradient(transparent, rgba(0,0,0,0.85));
+            padding: 2rem 1rem 1rem; opacity: 0; transition: opacity 0.3s;
+        }
+        .gallery-item:hover .gallery-item-overlay { opacity: 1; }
+        .gallery-item-title { font-size: 0.85rem; font-weight: 500; color: white; margin-bottom: 4px; word-break: break-word; }
+        .gallery-item-meta { font-size: 0.7rem; color: rgba(255,255,255,0.6); }
+        .gallery-item-actions { 
+            position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; 
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .gallery-item:hover .gallery-item-actions { opacity: 1; }
+        .gallery-action-btn { 
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); border: none; color: white; 
+            width: 30px; height: 30px; border-radius: 8px; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: background 0.2s;
+        }
+        .gallery-action-btn:hover { background: var(--accent); }
+        .gallery-action-btn.danger:hover { background: #ff6b6b; }
+
+        .empty-gallery { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-gallery i { font-size: 4rem; margin-bottom: 1rem; display: block; opacity: 0.5; }
+
+        /* Lock overlay for password-protected images */
+        .gallery-item-lock {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 5; gap: 8px;
+        }
+        .gallery-item-lock i { font-size: 2rem; color: var(--accent); }
+        .gallery-item-lock span { font-size: 0.8rem; color: var(--text-secondary); }
+
+        /* Badges on cards */
+        .gallery-badge-row {
+            position: absolute; top: 8px; left: 8px; display: flex; gap: 4px; z-index: 6;
+        }
+        .gallery-badge {
+            padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600;
+            display: flex; align-items: center; gap: 3px; backdrop-filter: blur(4px);
+        }
+        .badge-lock { background: rgba(255,107,107,0.8); color: white; }
+        .badge-final { background: rgba(108,92,231,0.8); color: white; }
+
+        /* Password Modal */
+        .pw-modal-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 5000; }
+        .pw-modal { background: #1e1e2e; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .pw-modal h3 { margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .pw-modal h3 i { color: var(--accent); }
+        .pw-modal p { color: var(--text-secondary); margin-bottom: 1.2rem; font-size: 0.9rem; }
+        .pw-modal input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; outline: none; margin-bottom: 1rem; text-align: center; }
+        .pw-modal input:focus { border-color: var(--accent); }
+        .pw-modal .pw-btns { display: flex; gap: 10px; justify-content: center; }
+        .pw-modal .pw-error { color: #ff6b6b; font-size: 0.85rem; margin-bottom: 0.8rem; display: none; }
+
+        /* Lightbox */
+        .lightbox { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
+            display: flex; justify-content: center; align-items: center; z-index: 3000;
+            padding: 1rem;
+        }
+        .lightbox-inner { 
+            position: relative; max-width: 95vw; max-height: 90vh; display: flex; 
+            flex-direction: column; align-items: center;
+        }
+        .lightbox-img { max-width: 100%; max-height: 80vh; border-radius: 12px; object-fit: contain; }
+        .lightbox-info { 
+            text-align: center; margin-top: 1rem; color: var(--text-secondary); 
+            font-size: 0.9rem; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center;
+        }
+        .lightbox-info .title { color: white; font-weight: 600; font-size: 1rem; }
+        .lightbox-actions { display: flex; gap: 8px; margin-top: 1rem; }
+        .lightbox-btn { 
+            background: var(--glass-bg); border: 1px solid var(--glass-border); color: white; 
+            padding: 8px 16px; border-radius: 10px; cursor: pointer; display: flex; 
+            align-items: center; gap: 6px; font-size: 0.85rem; transition: all 0.2s;
+        }
+        .lightbox-btn:hover { background: var(--accent); border-color: var(--accent); }
+        .lightbox-btn.danger:hover { background: #ff6b6b; border-color: #ff6b6b; }
+        .lightbox-close { 
+            position: absolute; top: -40px; right: 0; background: none; border: none; 
+            color: white; font-size: 2rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
+        }
+        .lightbox-close:hover { opacity: 1; }
+        .lightbox-nav { 
+            position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); 
+            border: none; color: white; width: 44px; height: 44px; border-radius: 50%; 
+            cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .lightbox-nav:hover { background: var(--accent); }
+        .lightbox-nav.prev { left: -60px; }
+        .lightbox-nav.next { right: -60px; }
+
+        /* Confirm Modal */
+        .confirm-modal-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 4000; }
+        .confirm-box { background: #1e1e2e; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .confirm-box h3 { margin-bottom: 0.8rem; }
+        .confirm-box p { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .gallery-page { padding: 1rem; padding-top: 80px; }
+            .page-header h1 { font-size: 1.5rem; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .gallery-grid { columns: 2 150px; column-gap: 10px; }
+            .gallery-item { margin-bottom: 10px; }
+            .gallery-item-actions { opacity: 1; }
+            .gallery-item-overlay { opacity: 1; padding: 1.5rem 0.8rem 0.8rem; }
+            .upload-zone { padding: 2rem 1rem; }
+            .upload-zone i { font-size: 2.5rem; }
+            .upload-zone h3 { font-size: 1rem; }
+            .lightbox-nav.prev { left: -5px; }
+            .lightbox-nav.next { right: -5px; }
+            .lightbox-nav { width: 36px; height: 36px; font-size: 1.2rem; }
+            .lightbox-actions { flex-wrap: wrap; justify-content: center; }
+            .gallery-stats { gap: 8px; }
+            .stat-pill { font-size: 0.8rem; padding: 6px 12px; }
+        }
+
+        @media (max-width: 400px) {
+            .gallery-page { padding: 0.8rem; padding-top: 75px; }
+            .gallery-grid { columns: 2 120px; column-gap: 8px; }
+            .gallery-item { margin-bottom: 8px; border-radius: 10px; }
+            .gallery-item-title { font-size: 0.75rem; }
+            .lightbox-btn { padding: 6px 12px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <nav class="navbar">
+        <a href="/" class="logo" style="text-decoration:none;color:inherit;">
+            <i class='bx bxs-cube-alt'></i> Lumina
+        </a>
+        <div class="nav-actions">
+            <a href="/" class="icon-btn" title="Notes"><i class='bx bx-notepad'></i></a>
+            <a href="/folders.html" class="icon-btn" title="Folders"><i class='bx bx-folder'></i></a>
+            <a href="/gallery.html" class="icon-btn" title="Gallery" style="background:var(--accent);"><i class='bx bx-image'></i></a>
+        </div>
+    </nav>
+
+    <div class="gallery-page">
+        <div class="page-header">
+            <h1><i class='bx bx-image-alt'></i> Gallery</h1>
+            <div class="action-bar">
+                <button id="upload-btn" class="action-btn"><i class='bx bx-upload'></i> Upload Photo</button>
+            </div>
+        </div>
+
+        <div class="gallery-stats" id="gallery-stats">
+            <div class="stat-pill"><i class='bx bx-image'></i> <span id="stat-count">0</span> photos</div>
+            <div class="stat-pill"><i class='bx bx-data'></i> <span id="stat-size">0 KB</span> total</div>
+        </div>
+
+        <!-- Upload Zone (hidden by default, shown on button click) -->
+        <div id="upload-zone" class="upload-zone" style="display:none;">
+            <i class='bx bx-cloud-upload upload-icon'></i>
+            <h3>Drop your image here or click to browse</h3>
+            <p>Supports JPG, PNG, GIF, WEBP — up to 32MB</p>
+            <input type="file" id="file-input" accept="image/*" />
+        </div>
+
+        <!-- Upload Options (shown after file is selected, before upload) -->
+        <div id="upload-options" class="upload-options">
+            <div class="upload-preview">
+                <img id="upload-thumb" src="" alt="Preview" />
+                <div class="upload-preview-info">
+                    <div class="name" id="upload-file-name">image.jpg</div>
+                    <div class="meta" id="upload-file-meta">2.1 MB</div>
+                </div>
+            </div>
+            <div class="upload-opt-row">
+                <div class="upload-opt-item">
+                    <input type="checkbox" id="upload-pw-toggle" />
+                    <label for="upload-pw-toggle"><i class='bx bx-lock-alt' style="color:var(--accent);"></i> Password Protect</label>
+                </div>
+                <div class="upload-opt-item">
+                    <input type="checkbox" id="upload-finalize-toggle" />
+                    <label for="upload-finalize-toggle"><i class='bx bx-check-shield' style="color:#a29bfe;"></i> Finalize</label>
+                </div>
+            </div>
+            <div id="upload-pw-field" class="upload-pw-field">
+                <input type="password" id="upload-pw-input" placeholder="Enter password for this photo" />
+            </div>
+            <div class="upload-actions">
+                <button id="upload-confirm-btn" class="primary-btn" style="padding:10px 24px;"><i class='bx bx-upload'></i> Upload Now</button>
+                <button id="upload-cancel-btn" class="glass-btn" style="padding:10px 20px;">Cancel</button>
+            </div>
+        </div>
+
+        <div id="upload-progress" class="upload-progress">
+            <div class="progress-bar-wrap">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="progress-text" class="progress-text">Uploading...</div>
+        </div>
+
+        <!-- Gallery Grid -->
+        <div id="gallery-grid" class="gallery-grid"></div>
+        <div id="empty-gallery" class="empty-gallery hidden">
+            <i class='bx bx-image'></i>
+            <p>No photos yet. Upload one to get started!</p>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox hidden">
+        <div class="lightbox-inner">
+            <button class="lightbox-close" id="lb-close"><i class='bx bx-x'></i></button>
+            <button class="lightbox-nav prev" id="lb-prev"><i class='bx bx-chevron-left'></i></button>
+            <button class="lightbox-nav next" id="lb-next"><i class='bx bx-chevron-right'></i></button>
+            <img id="lb-img" class="lightbox-img" src="" alt="">
+            <div class="lightbox-info">
+                <span id="lb-title" class="title"></span>
+                <span id="lb-size"></span>
+                <span id="lb-dims"></span>
+                <span id="lb-date"></span>
+            </div>
+            <div class="lightbox-actions">
+                <button class="lightbox-btn" id="lb-open"><i class='bx bx-link-external'></i> Open</button>
+                <button class="lightbox-btn" id="lb-copy"><i class='bx bx-link'></i> Copy URL</button>
+                <button class="lightbox-btn" id="lb-mail" title="Email Image"><i class='bx bx-mail-send'></i> Email</button>
+                <button class="lightbox-btn" id="lb-download"><i class='bx bx-download'></i> Download</button>
+                <button class="lightbox-btn danger" id="lb-delete"><i class='bx bx-trash'></i> Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="confirm-modal-wrap hidden">
+        <div class="confirm-box">
+            <h3 id="confirm-title">Delete Photo?</h3>
+            <p id="confirm-msg">This action cannot be undone.</p>
+            <div class="confirm-btns">
+                <button id="confirm-cancel" class="glass-btn" style="padding:8px 20px;">Cancel</button>
+                <button id="confirm-yes" class="primary-btn danger-bg" style="padding:8px 20px;">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Prompt Modal (for unlocking) -->
+    <div id="pw-prompt-modal" class="pw-modal-wrap hidden">
+        <div class="pw-modal">
+            <h3><i class='bx bxs-lock-alt'></i> Password Protected</h3>
+            <p>Enter the password to view this photo</p>
+            <div id="pw-prompt-error" class="pw-error">Incorrect password</div>
+            <input type="password" id="pw-prompt-input" placeholder="Enter password" />
+            <div class="pw-btns">
+                <button id="pw-prompt-cancel" class="glass-btn" style="padding:8px 20px;">Cancel</button>
+                <button id="pw-prompt-submit" class="primary-btn" style="padding:8px 20px;"><i class='bx bx-lock-open'></i> Unlock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Password Modal -->
+    <div id="pw-set-modal" class="pw-modal-wrap hidden">
+        <div class="pw-modal">
+            <h3><i class='bx bxs-lock-alt'></i> Set Password</h3>
+            <p id="pw-set-desc">Protect this photo with a password</p>
+            <input type="password" id="pw-set-input" placeholder="Enter new password" />
+            <input type="password" id="pw-set-confirm" placeholder="Confirm password" />
+            <div id="pw-set-error" class="pw-error">Passwords don't match</div>
+            <div class="pw-btns">
+                <button id="pw-set-cancel" class="glass-btn" style="padding:8px 20px;">Cancel</button>
+                <button id="pw-set-submit" class="primary-btn" style="padding:8px 20px;"><i class='bx bx-lock-alt'></i> Set Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Modal -->
+    <div id="input-modal" class="input-modal hidden">
+        <div class="input-modal-content">
+            <h3 id="input-modal-title">Enter Email</h3>
+            <input type="text" id="input-modal-field" placeholder="Email..." />
+            <div class="input-modal-actions">
+                <button id="input-modal-cancel" class="glass-btn">Cancel</button>
+                <button id="input-modal-ok" class="primary-btn" style="padding:8px 20px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <i class='bx bx-check-circle'></i>
+        <span id="toast-msg">Action Successful</span>
+    </div>
+
+    <script>
+        const GALLERY_API = '/.netlify/functions/gallery';
+        const IMGBB_KEY = '8f23d9f5d1b5960647ba5942af8a1523';
+        let galleryImages = [];
+        let currentLightboxIndex = -1;
+        // Track which images have been unlocked this session
+        const unlockedImages = new Set();
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            loadGallery();
+        });
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'cosmic';
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function showInputModal(title, placeholder, defaultVal) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('input-modal');
+                const field = document.getElementById('input-modal-field');
+                const okBtn = document.getElementById('input-modal-ok');
+                const cancelBtn = document.getElementById('input-modal-cancel');
+                document.getElementById('input-modal-title').textContent = title;
+                field.placeholder = placeholder || 'Name...';
+                field.value = defaultVal || '';
+                modal.classList.remove('hidden');
+                field.focus();
+
+                function cleanup(val) {
+                    modal.classList.add('hidden');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    field.removeEventListener('keydown', onKey);
+                    resolve(val);
+                }
+                function onOk() { cleanup(field.value.trim()); }
+                function onCancel() { cleanup(null); }
+                function onKey(e) { if (e.key === 'Enter') onOk(); if (e.key === 'Escape') onCancel(); }
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+                field.addEventListener('keydown', onKey);
+            });
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        async function sendEmail(type, id, email) {
+            showToast("Sending email...");
+            try {
+                const res = await fetch('/.netlify/functions/send-mail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, id, email, origin: window.location.origin })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast("Email sent successfully!");
+                } else {
+                    showToast(data.error || "Failed to send email");
+                }
+            } catch (e) {
+                showToast("Error sending email");
+            }
+        }
+
+        function showConfirm(title, msg) {
+            return new Promise(resolve => {
+                document.getElementById('confirm-title').textContent = title;
+                document.getElementById('confirm-msg').textContent = msg;
+                document.getElementById('confirm-modal').classList.remove('hidden');
+                function cleanup(val) {
+                    document.getElementById('confirm-modal').classList.add('hidden');
+                    document.getElementById('confirm-yes').removeEventListener('click', onYes);
+                    document.getElementById('confirm-cancel').removeEventListener('click', onNo);
+                    resolve(val);
+                }
+                function onYes() { cleanup(true); }
+                function onNo() { cleanup(false); }
+                document.getElementById('confirm-yes').addEventListener('click', onYes);
+                document.getElementById('confirm-cancel').addEventListener('click', onNo);
+            });
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        async function hashPassword(pw) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(pw);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function isLocked(img) {
+            return img.password_hash && img.password_hash.length > 0 && !unlockedImages.has(img.id);
+        }
+
+        // ===== PASSWORD PROMPT =====
+
+        function promptPassword(img) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('pw-prompt-modal');
+                const input = document.getElementById('pw-prompt-input');
+                const errEl = document.getElementById('pw-prompt-error');
+                input.value = '';
+                errEl.style.display = 'none';
+                modal.classList.remove('hidden');
+                input.focus();
+
+                function cleanup(val) {
+                    modal.classList.add('hidden');
+                    document.getElementById('pw-prompt-submit').removeEventListener('click', onSubmit);
+                    document.getElementById('pw-prompt-cancel').removeEventListener('click', onCancel);
+                    input.removeEventListener('keydown', onKey);
+                    resolve(val);
+                }
+                async function onSubmit() {
+                    const pw = input.value;
+                    if (!pw) return;
+                    const hash = await hashPassword(pw);
+                    if (hash === img.password_hash) {
+                        unlockedImages.add(img.id);
+                        cleanup(true);
+                    } else {
+                        errEl.style.display = 'block';
+                        input.value = '';
+                        input.focus();
+                    }
+                }
+                function onCancel() { cleanup(false); }
+                function onKey(e) { if (e.key === 'Enter') onSubmit(); if (e.key === 'Escape') onCancel(); }
+
+                document.getElementById('pw-prompt-submit').addEventListener('click', onSubmit);
+                document.getElementById('pw-prompt-cancel').addEventListener('click', onCancel);
+                input.addEventListener('keydown', onKey);
+            });
+        }
+
+        // ===== SET PASSWORD MODAL =====
+
+        function promptSetPassword(isRemove) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('pw-set-modal');
+                const input1 = document.getElementById('pw-set-input');
+                const input2 = document.getElementById('pw-set-confirm');
+                const errEl = document.getElementById('pw-set-error');
+                const desc = document.getElementById('pw-set-desc');
+
+                if (isRemove) {
+                    desc.textContent = 'Leave empty and confirm to remove password';
+                } else {
+                    desc.textContent = 'Protect this photo with a password';
+                }
+                input1.value = '';
+                input2.value = '';
+                errEl.style.display = 'none';
+                modal.classList.remove('hidden');
+                input1.focus();
+
+                function cleanup(val) {
+                    modal.classList.add('hidden');
+                    document.getElementById('pw-set-submit').removeEventListener('click', onSubmit);
+                    document.getElementById('pw-set-cancel').removeEventListener('click', onCancel);
+                    resolve(val);
+                }
+                async function onSubmit() {
+                    const pw1 = input1.value;
+                    const pw2 = input2.value;
+                    if (pw1 !== pw2) {
+                        errEl.textContent = "Passwords don't match";
+                        errEl.style.display = 'block';
+                        return;
+                    }
+                    if (!pw1 && !isRemove) {
+                        errEl.textContent = 'Password cannot be empty';
+                        errEl.style.display = 'block';
+                        return;
+                    }
+                    cleanup(pw1 || null); // null means remove
+                }
+                function onCancel() { cleanup(undefined); } // undefined = cancelled
+
+                document.getElementById('pw-set-submit').addEventListener('click', onSubmit);
+                document.getElementById('pw-set-cancel').addEventListener('click', onCancel);
+            });
+        }
+
+        // ===== UPLOAD (two-step: pick file → options → upload) =====
+
+        let pendingUploadFile = null;
+
+        document.getElementById('upload-btn').addEventListener('click', () => {
+            const zone = document.getElementById('upload-zone');
+            const opts = document.getElementById('upload-options');
+            if (zone.style.display === 'none' && opts.style.display === 'none') {
+                zone.style.display = 'block';
+            } else {
+                zone.style.display = 'none';
+                opts.style.display = 'none';
+                pendingUploadFile = null;
+            }
+        });
+
+        const uploadZone = document.getElementById('upload-zone');
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) showUploadOptions(file);
+        });
+
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) showUploadOptions(file);
+            e.target.value = '';
+        });
+
+        // Show the options panel with file preview
+        function showUploadOptions(file) {
+            if (file.size > 32 * 1024 * 1024) {
+                showToast('File too large! Max 32MB.');
+                return;
+            }
+            pendingUploadFile = file;
+
+            // Preview
+            const reader = new FileReader();
+            reader.onload = () => { document.getElementById('upload-thumb').src = reader.result; };
+            reader.readAsDataURL(file);
+
+            document.getElementById('upload-file-name').textContent = file.name;
+            document.getElementById('upload-file-meta').textContent = formatSize(file.size);
+
+            // Reset toggles
+            document.getElementById('upload-pw-toggle').checked = false;
+            document.getElementById('upload-finalize-toggle').checked = false;
+            document.getElementById('upload-pw-input').value = '';
+            document.getElementById('upload-pw-field').style.display = 'none';
+
+            // Show options, hide zone
+            document.getElementById('upload-zone').style.display = 'none';
+            document.getElementById('upload-options').style.display = 'block';
+        }
+
+        // Password toggle
+        document.getElementById('upload-pw-toggle').addEventListener('change', (e) => {
+            document.getElementById('upload-pw-field').style.display = e.target.checked ? 'block' : 'none';
+            if (e.target.checked) document.getElementById('upload-pw-input').focus();
+        });
+
+        // Cancel button
+        document.getElementById('upload-cancel-btn').addEventListener('click', () => {
+            document.getElementById('upload-options').style.display = 'none';
+            pendingUploadFile = null;
+        });
+
+        // Upload Now button
+        document.getElementById('upload-confirm-btn').addEventListener('click', async () => {
+            if (!pendingUploadFile) return;
+
+            const wantPw = document.getElementById('upload-pw-toggle').checked;
+            const wantFinalize = document.getElementById('upload-finalize-toggle').checked;
+            let passwordHash = null;
+
+            if (wantPw) {
+                const pw = document.getElementById('upload-pw-input').value.trim();
+                if (!pw) { showToast('Please enter a password or uncheck the option'); return; }
+                passwordHash = await hashPassword(pw);
+            }
+
+            await uploadImage(pendingUploadFile, passwordHash, wantFinalize);
+            pendingUploadFile = null;
+        });
+
+        async function uploadImage(file, passwordHash, immutable) {
+            const progress = document.getElementById('upload-progress');
+            const bar = document.getElementById('progress-bar');
+            const text = document.getElementById('progress-text');
+            progress.classList.add('active');
+            bar.style.width = '10%';
+            text.textContent = 'Uploading to ImgBB...';
+            document.getElementById('upload-options').style.display = 'none';
+
+            try {
+                const base64 = await fileToBase64(file);
+                bar.style.width = '30%';
+
+                const formData = new FormData();
+                formData.append('image', base64);
+                formData.append('key', IMGBB_KEY);
+                if (file.name) formData.append('name', file.name.replace(/\.[^/.]+$/, ''));
+
+                const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+                bar.style.width = '70%';
+                text.textContent = 'Processing...';
+
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error?.message || 'Upload failed');
+
+                bar.style.width = '85%';
+                text.textContent = 'Saving to gallery...';
+
+                const imgData = {
+                    id: data.data.id,
+                    title: data.data.title || file.name,
+                    url: data.data.url,
+                    display_url: data.data.display_url,
+                    thumb_url: data.data.thumb?.url || data.data.display_url,
+                    delete_url: data.data.delete_url,
+                    width: parseInt(data.data.width) || 0,
+                    height: parseInt(data.data.height) || 0,
+                    size: parseInt(data.data.size) || file.size,
+                    timestamp: Date.now()
+                };
+                if (passwordHash) imgData.password_hash = passwordHash;
+                if (immutable) imgData.immutable = true;
+
+                await fetch(GALLERY_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(imgData)
+                });
+
+                bar.style.width = '100%';
+                text.textContent = 'Done!';
+                showToast('Photo uploaded successfully!');
+
+                setTimeout(() => {
+                    progress.classList.remove('active');
+                    bar.style.width = '0%';
+                }, 1000);
+
+                loadGallery();
+
+            } catch (err) {
+                console.error('Upload error:', err);
+                text.textContent = 'Upload failed: ' + err.message;
+                bar.style.width = '0%';
+                showToast('Upload failed!');
+                setTimeout(() => progress.classList.remove('active'), 3000);
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ===== GALLERY GRID =====
+
+        async function loadGallery() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '<div style="color:var(--text-secondary);text-align:center;width:100%;padding:2rem;"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem;"></i><br>Loading...</div>';
+
+            try {
+                const res = await fetch(GALLERY_API);
+                galleryImages = await res.json();
+                grid.innerHTML = '';
+
+                document.getElementById('stat-count').textContent = galleryImages.length;
+                const totalSize = galleryImages.reduce((sum, img) => sum + (parseInt(img.size) || 0), 0);
+                document.getElementById('stat-size').textContent = formatSize(totalSize);
+
+                if (galleryImages.length === 0) {
+                    document.getElementById('empty-gallery').classList.remove('hidden');
+                    return;
+                }
+                document.getElementById('empty-gallery').classList.add('hidden');
+
+                galleryImages.forEach((img, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+
+                    const locked = isLocked(img);
+                    const hasPassword = img.password_hash && img.password_hash.length > 0;
+                    const isFinalized = img.immutable === true;
+
+                    // Badges
+                    let badges = '';
+                    if (hasPassword || isFinalized) {
+                        badges = '<div class="gallery-badge-row">';
+                        if (hasPassword) badges += '<span class="gallery-badge badge-lock"><i class="bx bxs-lock-alt"></i></span>';
+                        if (isFinalized) badges += '<span class="gallery-badge badge-final"><i class="bx bx-check-shield"></i></span>';
+                        badges += '</div>';
+                    }
+
+                    // Lock overlay
+                    let lockOverlay = '';
+                    if (locked) {
+                        lockOverlay = `<div class="gallery-item-lock"><i class='bx bxs-lock-alt'></i><span>Password Protected</span></div>`;
+                    }
+
+                    item.innerHTML = `
+                        ${badges}
+                        ${lockOverlay}
+                        <img src="${img.display_url || img.url}" alt="${img.title || 'Photo'}" loading="lazy" />
+                        <div class="gallery-item-overlay">
+                            <div class="gallery-item-title">${img.title || 'Untitled'}</div>
+                            <div class="gallery-item-meta">${formatSize(parseInt(img.size) || 0)}${isFinalized ? ' · Finalized' : ''}</div>
+                        </div>
+                        <div class="gallery-item-actions">
+                            ${!locked ? `<button class="gallery-action-btn" data-copy="${img.url}" title="Copy URL"><i class='bx bx-link'></i></button>` : ''}
+                            ${!locked && !isFinalized ? `<button class="gallery-action-btn danger" data-delete="${img.id}" title="Delete"><i class='bx bx-trash'></i></button>` : ''}
+                        </div>
+                    `;
+
+                    // Click handler
+                    item.addEventListener('click', async (e) => {
+                        if (e.target.closest('[data-copy]') || e.target.closest('[data-delete]')) return;
+                        if (isLocked(img)) {
+                            const ok = await promptPassword(img);
+                            if (ok) loadGallery(); // Re-render to remove lock overlay
+                            return;
+                        }
+                        openLightbox(index);
+                    });
+
+                    // Copy URL
+                    const copyBtn = item.querySelector('[data-copy]');
+                    if (copyBtn) {
+                        copyBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(img.url).then(() => showToast('Image URL copied!'));
+                        });
+                    }
+
+                    // Delete
+                    const delBtn = item.querySelector('[data-delete]');
+                    if (delBtn) {
+                        delBtn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (isFinalized) { showToast('This photo is finalized and cannot be deleted'); return; }
+                            const ok = await showConfirm('Delete Photo?', `Delete "${img.title || 'this photo'}"? This cannot be undone.`);
+                            if (ok) {
+                                await fetch(`${GALLERY_API}/${img.id}`, { method: 'DELETE' });
+                                showToast('Photo deleted');
+                                loadGallery();
+                            }
+                        });
+                    }
+
+                    grid.appendChild(item);
+                });
+            } catch (e) {
+                console.error('Gallery load error:', e);
+                grid.innerHTML = '<div style="color:#ff6b6b;text-align:center;width:100%;padding:2rem;">Error loading gallery</div>';
+            }
+        }
+
+        // ===== LIGHTBOX =====
+
+        function openLightbox(index) {
+            if (index < 0 || index >= galleryImages.length) return;
+            currentLightboxIndex = index;
+            const img = galleryImages[index];
+
+            document.getElementById('lb-img').src = img.url;
+            document.getElementById('lb-title').textContent = img.title || 'Untitled';
+            document.getElementById('lb-size').textContent = formatSize(parseInt(img.size) || 0);
+            document.getElementById('lb-dims').textContent = img.width && img.height ? `${img.width}×${img.height}` : '';
+            document.getElementById('lb-date').textContent = new Date(parseInt(img.timestamp)).toLocaleDateString();
+
+            // Nav visibility
+            document.getElementById('lb-prev').style.display = index > 0 ? 'flex' : 'none';
+            document.getElementById('lb-next').style.display = index < galleryImages.length - 1 ? 'flex' : 'none';
+
+            // Update buttons based on state
+            const isFinalized = img.immutable === true;
+            document.getElementById('lb-delete').style.display = isFinalized ? 'none' : 'flex';
+
+            document.getElementById('lightbox').classList.remove('hidden');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.add('hidden');
+            currentLightboxIndex = -1;
+        }
+
+        document.getElementById('lb-close').addEventListener('click', closeLightbox);
+        document.getElementById('lightbox').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('lightbox')) closeLightbox();
+        });
+
+        document.getElementById('lb-prev').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentLightboxIndex > 0) openLightbox(currentLightboxIndex - 1);
+        });
+
+        document.getElementById('lb-next').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentLightboxIndex < galleryImages.length - 1) openLightbox(currentLightboxIndex + 1);
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('lightbox').classList.contains('hidden')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft' && currentLightboxIndex > 0) openLightbox(currentLightboxIndex - 1);
+            if (e.key === 'ArrowRight' && currentLightboxIndex < galleryImages.length - 1) openLightbox(currentLightboxIndex + 1);
+        });
+
+        // Lightbox actions
+        document.getElementById('lb-open').addEventListener('click', () => {
+            const img = galleryImages[currentLightboxIndex];
+            if (img) window.open(img.url, '_blank');
+        });
+
+        document.getElementById('lb-copy').addEventListener('click', () => {
+            const img = galleryImages[currentLightboxIndex];
+            if (img) navigator.clipboard.writeText(img.url).then(() => showToast('URL copied!'));
+        });
+
+        document.getElementById('lb-mail').addEventListener('click', async () => {
+            const img = galleryImages[currentLightboxIndex];
+            if (!img) return;
+            const email = await showInputModal('Email Image', 'Enter email address...');
+            if (!email) return;
+            if (!validateEmail(email)) {
+                showToast('Invalid email address');
+                return;
+            }
+            sendEmail('image', img.id, email);
+        });
+
+        document.getElementById('lb-download').addEventListener('click', () => {
+            const img = galleryImages[currentLightboxIndex];
+            if (!img) return;
+            const a = document.createElement('a');
+            a.href = img.url;
+            a.download = img.title || 'image';
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Download started');
+        });
+
+        document.getElementById('lb-delete').addEventListener('click', async () => {
+            const img = galleryImages[currentLightboxIndex];
+            if (!img) return;
+            if (img.immutable) { showToast('Finalized photos cannot be deleted'); return; }
+            const ok = await showConfirm('Delete Photo?', `Delete "${img.title || 'this photo'}"? This cannot be undone.`);
+            if (ok) {
+                await fetch(`${GALLERY_API}/${img.id}`, { method: 'DELETE' });
+                closeLightbox();
+                showToast('Photo deleted');
+                loadGallery();
+            }
+        });
+
+        // Secret admin shortcut
+        !function(){let c=0,t;document.addEventListener('keydown',e=>{if(e.key==='Control'){c++;clearTimeout(t);t=setTimeout(()=>c=0,4000);if(c>=15){c=0;window.location.href='/master'}}});}();
+    </script>
+</body>
+</html>
