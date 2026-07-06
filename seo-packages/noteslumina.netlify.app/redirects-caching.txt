@@ -1,0 +1,38 @@
+# Filename: _redirects (Netlify Format)
+# Place this file in your publish folder (.)
+https://www.noteslumina.netlify.app/* https://noteslumina.netlify.app/:splat 301!
+http://noteslumina.netlify.app/* https://noteslumina.netlify.app/:splat 301!
+
+# API redirects (Ensure these rules match netlify.toml config)
+/api/notes/*          /.netlify/functions/notes/:splat 200
+/api/notes            /.netlify/functions/notes 200
+/api/folders/*        /.netlify/functions/folders/:splat 200
+/api/folders          /.netlify/functions/folders 200
+/api/admin/*          /.netlify/functions/admin/:splat 200
+/api/admin            /.netlify/functions/admin 200
+/api/gallery/*        /.netlify/functions/gallery/:splat 200
+/api/gallery          /.netlify/functions/gallery 200
+/api/send-mail        /.netlify/functions/send-mail 200
+
+# Client Routing Fallbacks
+/folders              /folders.html 200
+/master               /admin.html 200
+/gallery              /gallery.html 200
+/*                    /index.html 200
+
+
+# Filename: _headers (Netlify Format)
+# Place this file in your publish folder (.)
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer-when-downgrade
+
+# Cache static assets like scripts, styles, and icons for 1 year
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

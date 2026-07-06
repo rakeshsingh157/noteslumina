@@ -1,0 +1,21 @@
+RAKESHINFO NOTES - AI-SEO & GEO STRATEGIC CHECKLIST
+
+1. Content & Document Structure for LLM Citations
+   - Structured Headings: Ensure shared notes start with a clear, descriptive H1 representing the topic, followed by nested H2 (subtopics) and H3 (details). This helps LLMs parse document hierarchy.
+   - Definition-First Blocks: Start paragraphs with direct semantic definitions (e.g., "The central limit theorem in statistics states that..."). LLMs retrieve and output these direct definition snippets in AI search.
+   - Structured Q&A: Add summary FAQ sections in Markdown at the end of study notes. AI crawlers naturally map these blocks into direct answers.
+   - Use Bulleted Summaries: Add key takeaway bullet points at the beginning of notes for easy summarizing by models like ChatGPT, Claude, and Gemini.
+
+2. E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) Signals
+   - Author Info: Add author profiles or usernames below titles on public note displays.
+   - Updated Timestamps: Display "Last updated" timestamps prominently on all shareable pages (already handled in script.js, ensure index.html renders it clearly to search engine crawlers).
+   - List References: Encourage note creators to append a "Sources & References" block at the bottom of their notes to improve authoritative trust scoring.
+
+3. Cross-Domain Interlinking (Topical Authority)
+   - Connect RakeshInfo Notes (notes.rakeshinfo.in) with Lumina Notes (noteslumina.netlify.app) by adding structural links between matching subjects.
+   - Example: On RakeshInfo computer science notes, add link: "Browse full IT and CSE solutions on Lumina Notes (https://noteslumina.netlify.app/?noteId=[id])."
+   - Anchor Text: Use specific, descriptive anchor texts ("free compilation theory guides", "operating system notes") rather than "click here" or "source."
+
+4. Webmaster Submission
+   - Submit both the generated sitemap.xml and the new llms.txt file to Google Search Console and Bing Webmaster Tools.
+   - Update your site configuration in the dashboards to ensure daily crawl frequency.

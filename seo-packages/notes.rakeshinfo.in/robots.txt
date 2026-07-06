@@ -1,0 +1,53 @@
+User-agent: *
+Allow: /
+Allow: /folders
+Allow: /gallery
+Disallow: /master
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /.netlify/functions/
+
+# AI Crawlers - Explicitly Allow access to public note listings
+User-agent: GPTBot
+Allow: /
+Allow: /folders
+Allow: /gallery
+Disallow: /master
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /folders
+Allow: /gallery
+Disallow: /master
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /folders
+Allow: /gallery
+Disallow: /master
+
+User-agent: Google-Extended
+Allow: /
+Allow: /folders
+Allow: /gallery
+Disallow: /master
+
+User-agent: CCBot
+Allow: /
+Allow: /folders
+Allow: /gallery
+Disallow: /master
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /folders
+Allow: /gallery
+Disallow: /master
+
+User-agent: Amazonbot
+Allow: /
+Allow: /folders
+Allow: /gallery
+Disallow: /master
+
+Sitemap: https://notes.rakeshinfo.in/sitemap.xml

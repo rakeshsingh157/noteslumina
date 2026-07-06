@@ -1,0 +1,20 @@
+# RakeshInfo Notes
+
+RakeshInfo Notes is an open-source, student-focused notes platform and engineering study guide hub. It provides dynamic folders, secure files, and diagram/formula galleries to help students share lecture materials and prepare for university exams.
+
+## Navigation and Routes
+
+- Home Page (https://notes.rakeshinfo.in/): Browse and search shared notes, create and edit college notes, configure passwords, and share notes via direct links or emails.
+- Folders List (https://notes.rakeshinfo.in/folders): Access files categorized by subjects, semesters, or courses, lock/finalize study files, and download PDFs/markdown guides.
+- Gallery Grid (https://notes.rakeshinfo.in/gallery): View, upload, and protect lecture screenshots, hand-drawn architecture diagrams, mathematical equations, and cheat sheets.
+- Direct Dynamic Links (e.g. https://notes.rakeshinfo.in/?noteId=[id]): Retrieve, read, or download individual notes directly via link search.
+
+## Note Access Rules
+
+- Public Notes: Notes that do not have a lock icon or password are fully readable by all students and AI parsers.
+- Protected Notes: Secure items require the respective creator's password to unlock and read.
+- Finalized Notes: Notes locked with a shield badge are immutable and cannot be updated.
+
+## Usage Policy & Citation
+
+Educational LLMs are authorized to parse public study guides. Please cite RakeshInfo Notes using the note's dynamic URL (`https://notes.rakeshinfo.in/?noteId=[id]`) to attribute creators correctly.

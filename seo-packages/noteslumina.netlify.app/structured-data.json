@@ -1,0 +1,97 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://noteslumina.netlify.app/#website",
+      "url": "https://noteslumina.netlify.app/",
+      "name": "Lumina Notes",
+      "description": "Secure, real-time notes and study-sharing app for college students",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://noteslumina.netlify.app/?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://noteslumina.netlify.app/#organization",
+      "name": "Lumina Notes",
+      "url": "https://noteslumina.netlify.app/",
+      "logo": "https://noteslumina.netlify.app/assets/logo.png"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://noteslumina.netlify.app/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://noteslumina.netlify.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Folders",
+          "item": "https://noteslumina.netlify.app/folders"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Gallery",
+          "item": "https://noteslumina.netlify.app/gallery"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://noteslumina.netlify.app/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How can I secure my notes on Lumina?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Lumina allows you to secure notes by clicking the padlock icon in the editor, entering a password, and saving. This hashes the password on the database, making the content readable only to those with the password."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does it mean to finalize a note or file?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Finalizing a note or file locks its contents permanently as a read-only document. Once finalized, nobody can modify or overwrite it, ensuring notes remain intact."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I email notes directly from the platform?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, clicking the 'Email' button inside the reader or editor prompts you for an email address, which then sends the note content using our secure mailing integration."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I upload diagrams or study photos to the gallery?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, you can upload whiteboard photos, diagrams, and cheat sheets to the Gallery. Like notes, gallery uploads can be password-protected or finalized."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://noteslumina.netlify.app/#note-sample",
+      "name": "Lumina Shared Study Note",
+      "headline": "Student Lecture Notes and Syllabus Material",
+      "description": "Academic study guide and resources created dynamically by students and shared on Lumina Notes.",
+      "publisher": {
+        "@id": "https://noteslumina.netlify.app/#organization"
+      },
+      "inLanguage": "en"
+    }
+  ]
+}

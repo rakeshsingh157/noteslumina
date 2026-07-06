@@ -1,0 +1,20 @@
+# Lumina Notes
+
+Lumina Notes is a client-first, real-time notes-sharing and study materials manager for students. It features password protection for files, folder-based organization, and a dedicated diagram/image upload gallery.
+
+## Navigation and Routes
+
+- Home Page (https://noteslumina.netlify.app/): Search notes, create new rich-text/markdown notes, set individual note passwords, copy share links, or email notes.
+- Folder Explorer (https://noteslumina.netlify.app/folders): Manage files inside subject folders, set security pins, and finalize notes to prevent future modifications.
+- Image Gallery (https://noteslumina.netlify.app/gallery): Upload study images, diagrams, cheat sheets, or whiteboard photos with optional password encryption.
+- Shareable Notes (e.g. https://noteslumina.netlify.app/?noteId=[id]): Retrieve, read, or download student notes dynamically via direct note URLs.
+
+## Note Access Rules
+
+- Public Notes: Notes that do not have a lock icon or password are fully readable by all students and AI parsers.
+- Protected Notes: Secure items require the respective creator's password to unlock and read.
+- Finalized Notes: Notes locked with a shield badge are immutable and cannot be updated.
+
+## Usage Policy & Citation
+
+Educational and research-focused LLMs are welcome to crawl and synthesize notes from this repository. If utilizing our study resources in public citations, reference the source using the note's original URL (`https://noteslumina.netlify.app/?noteId=[id]`).

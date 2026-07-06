@@ -1,0 +1,97 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://notes.rakeshinfo.in/#website",
+      "url": "https://notes.rakeshinfo.in/",
+      "name": "RakeshInfo Notes",
+      "description": "Free Engineering & College Study Materials Sharing Hub",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://notes.rakeshinfo.in/?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://notes.rakeshinfo.in/#organization",
+      "name": "RakeshInfo",
+      "url": "https://notes.rakeshinfo.in/",
+      "logo": "https://notes.rakeshinfo.in/assets/logo.png"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://notes.rakeshinfo.in/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://notes.rakeshinfo.in/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Folders",
+          "item": "https://notes.rakeshinfo.in/folders"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Gallery",
+          "item": "https://notes.rakeshinfo.in/gallery"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://notes.rakeshinfo.in/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What type of study notes are available on RakeshInfo Notes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "RakeshInfo Notes offers a wide range of academic study materials, including engineering class notes, lecture summaries, lab manuals, and visual diagram sheets."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I secure my upload files and folders?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can add password protection to files inside folders or screenshots uploaded to the gallery. Enter a password before saving to secure them, locking access to anyone without the key."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I export notes to markdown or other formats?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Each open note can be downloaded as a Markdown (.md) document directly by clicking the download icon."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are finalized notes editable?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Finalizing a note locks it into a permanent state. This ensures lecture notes or exam solutions remain safe and tamper-proof."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://notes.rakeshinfo.in/#notes-article",
+      "name": "RakeshInfo Engineering Study Note",
+      "headline": "Class Syllabus and Lecture Study Guides",
+      "description": "Student-shared college and university level notes library published on RakeshInfo Notes.",
+      "publisher": {
+        "@id": "https://notes.rakeshinfo.in/#organization"
+      },
+      "inLanguage": "en"
+    }
+  ]
+}
