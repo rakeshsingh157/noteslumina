@@ -44,6 +44,10 @@ app.get('/master', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+app.get('/upload', (req, res) => {
+    res.sendFile(path.join(__dirname, 'upload.html'));
+});
+
 // Database Connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina - Upload Folder</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        .upload-page{padding:2rem;max-width:1000px;margin:0 auto;padding-top:100px}
+        .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+        .page-header h1{display:flex;align-items:center;gap:10px;font-size:2rem}
+        .page-header h1 i{color:var(--accent)}
+
+        .drop-zone{border:2px dashed var(--glass-border);border-radius:20px;padding:4rem 2rem;text-align:center;cursor:pointer;transition:all .3s;background:var(--glass-bg);position:relative}
+        .drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:rgba(108,92,231,.1);transform:translateY(-2px)}
+        .drop-zone i{font-size:4rem;color:var(--accent);margin-bottom:1rem;display:block}
+        .drop-zone p{color:var(--text-secondary);font-size:1.1rem;margin-bottom:.5rem}
+        .drop-zone small{color:var(--text-secondary);opacity:.7}
+        .drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+        .ignore-config{margin-top:2rem;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;padding:1.5rem;display:none}
+        .ignore-config.visible{display:block}
+        .ignore-config h3{margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+        .ignore-config h3 i{color:var(--accent)}
+        .ignore-tabs{display:flex;gap:8px;margin-bottom:1rem}
+        .ignore-tab{padding:8px 16px;border-radius:8px;border:1px solid var(--glass-border);background:transparent;color:var(--text-primary);cursor:pointer;font-size:.85rem;transition:all .2s}
+        .ignore-tab.active{background:var(--accent);border-color:var(--accent)}
+        .ignore-textarea{width:100%;min-height:120px;background:rgba(0,0,0,.2);border:1px solid var(--glass-border);border-radius:10px;padding:1rem;color:var(--text-primary);font-family:var(--font-mono);font-size:.85rem;resize:vertical;outline:none}
+        .ignore-textarea:focus{border-color:var(--accent)}
+        .ignore-hint{font-size:.8rem;color:var(--text-secondary);margin-top:.5rem}
+
+        .file-review{margin-top:2rem;display:none}
+        .file-review.visible{display:block}
+        .review-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem}
+        .review-header h3{display:flex;align-items:center;gap:8px}
+        .review-header h3 i{color:var(--accent)}
+        .review-stats{display:flex;gap:12px;font-size:.85rem;color:var(--text-secondary)}
+        .review-stats span{display:flex;align-items:center;gap:4px}
+        .stat-add{color:#00d2d3}
+        .stat-ignore{color:#ff6b6b}
+
+        .bulk-actions{display:flex;gap:8px;margin-bottom:1rem}
+        .bulk-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--glass-border);background:transparent;color:var(--text-primary);cursor:pointer;font-size:.8rem;transition:all .2s}
+        .bulk-btn:hover{background:rgba(255,255,255,.1)}
+
+        .file-list{max-height:50vh;overflow-y:auto;border:1px solid var(--glass-border);border-radius:12px;background:rgba(0,0,0,.15)}
+        .file-item{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);gap:12px;transition:background .2s}
+        .file-item:last-child{border-bottom:none}
+        .file-item:hover{background:rgba(255,255,255,.03)}
+        .file-item.ignored{opacity:.5}
+        .file-item .file-path{flex:1;font-family:var(--font-mono);font-size:.85rem;word-break:break-all}
+        .file-item .file-size{font-size:.75rem;color:var(--text-secondary);white-space:nowrap;min-width:60px;text-align:right}
+        .file-item .file-reason{font-size:.7rem;color:#ff6b6b;white-space:nowrap;padding:2px 8px;background:rgba(255,107,107,.1);border-radius:4px}
+        .file-toggle{padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;transition:all .2s;min-width:70px}
+        .file-toggle.add{background:rgba(0,210,211,.15);color:#00d2d3;border:1px solid rgba(0,210,211,.3)}
+        .file-toggle.ignore{background:rgba(255,107,107,.15);color:#ff6b6b;border:1px solid rgba(255,107,107,.3)}
+        .file-toggle:hover{transform:scale(1.05)}
+
+        .upload-actions{margin-top:2rem;display:flex;gap:12px;justify-content:flex-end;display:none}
+        .upload-actions.visible{display:flex}
+        .upload-btn{background:var(--accent);color:#fff;border:none;padding:12px 28px;border-radius:12px;cursor:pointer;font-weight:600;font-size:1rem;display:flex;align-items:center;gap:8px;transition:all .3s}
+        .upload-btn:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 5px 20px rgba(0,0,0,.3)}
+        .upload-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .cancel-btn{background:transparent;border:1px solid var(--glass-border);color:var(--text-primary);padding:12px 28px;border-radius:12px;cursor:pointer;font-weight:500;transition:all .2s}
+        .cancel-btn:hover{background:rgba(255,255,255,.1)}
+
+        .folder-name-input{background:rgba(0,0,0,.2);border:1px solid var(--glass-border);color:var(--text-primary);padding:10px 16px;border-radius:10px;font-size:1rem;outline:none;width:100%;max-width:400px;font-family:var(--font-main);margin-bottom:1rem}
+        .folder-name-input:focus{border-color:var(--accent)}
+
+        .progress-bar{width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:1rem;overflow:hidden;display:none}
+        .progress-bar.visible{display:block}
+        .progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s;width:0}
+
+        @media(max-width:768px){
+            .upload-page{padding:1rem;padding-top:80px}
+            .page-header h1{font-size:1.5rem}
+            .drop-zone{padding:2rem 1rem}
+            .drop-zone i{font-size:3rem}
+            .file-item{padding:8px 12px;flex-wrap:wrap}
+            .file-item .file-size{min-width:auto}
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    <nav class="navbar">
+        <a href="/" class="logo" style="text-decoration:none;color:inherit;">
+            <i class='bx bxs-cube-alt'></i> Lumina
+        </a>
+        <span id="master-badge" style="display:none;background:linear-gradient(135deg,#ff6b6b,#ffd93d);color:#000;font-weight:700;font-size:.75rem;padding:4px 12px;border-radius:20px;letter-spacing:1px;">MASTER</span>
+        <div class="nav-actions">
+            <a href="/" class="icon-btn" title="Notes"><i class='bx bx-notepad'></i></a>
+            <a href="/folders.html" class="icon-btn" title="Folders"><i class='bx bx-folder'></i></a>
+            <a href="/upload.html" class="icon-btn" title="Upload Folder" style="background:var(--accent);"><i class='bx bx-upload'></i></a>
+            <a href="/gallery.html" class="icon-btn" title="Gallery"><i class='bx bx-image'></i></a>
+        </div>
+    </nav>
+
+    <div class="upload-page">
+        <div class="page-header">
+            <h1><i class='bx bx-cloud-upload'></i> Upload Folder</h1>
+        </div>
+
+        <div id="drop-zone" class="drop-zone">
+            <i class='bx bx-folder-open'></i>
+            <p>Drop a folder here or click to browse</p>
+            <small>All files will be scanned • .gitignore &amp; .noteslumina rules will be applied</small>
+            <input type="file" id="folder-input" webkitdirectory directory multiple />
+        </div>
+
+        <div id="ignore-config" class="ignore-config">
+            <h3><i class='bx bx-filter'></i> Ignore Rules</h3>
+            <div class="ignore-tabs">
+                <button class="ignore-tab active" data-tab="gitignore">.gitignore</button>
+                <button class="ignore-tab" data-tab="noteslumina">.noteslumina</button>
+            </div>
+            <textarea id="gitignore-area" class="ignore-textarea" placeholder="# .gitignore rules&#10;node_modules/&#10;.env&#10;*.log"></textarea>
+            <textarea id="noteslumina-area" class="ignore-textarea" style="display:none" placeholder="# .noteslumina rules&#10;# Works like .gitignore&#10;# Add patterns to exclude files"></textarea>
+            <p class="ignore-hint">Edit rules above, then click "Re-scan" to update the file list.</p>
+            <button id="rescan-btn" class="bulk-btn" style="margin-top:.8rem"><i class='bx bx-refresh'></i> Re-scan Files</button>
+        </div>
+
+        <div id="file-review" class="file-review">
+            <div class="review-header">
+                <h3><i class='bx bx-list-check'></i> Review Files</h3>
+                <div class="review-stats">
+                    <span class="stat-add"><i class='bx bx-plus-circle'></i> <b id="add-count">0</b> adding</span>
+                    <span class="stat-ignore"><i class='bx bx-x-circle'></i> <b id="ignore-count">0</b> ignored</span>
+                </div>
+            </div>
+            <input type="text" id="folder-name" class="folder-name-input" placeholder="Folder name (defaults to uploaded folder name)..." />
+            <div class="bulk-actions">
+                <button class="bulk-btn" id="add-all-btn"><i class='bx bx-check-double'></i> Add All</button>
+                <button class="bulk-btn" id="ignore-all-btn"><i class='bx bx-x'></i> Ignore All</button>
+                <button class="bulk-btn" id="reset-btn"><i class='bx bx-reset'></i> Reset to Rules</button>
+            </div>
+            <div id="file-list" class="file-list"></div>
+        </div>
+
+        <div id="upload-actions" class="upload-actions">
+            <button class="cancel-btn" id="cancel-upload-btn"><i class='bx bx-x'></i> Cancel</button>
+            <button class="upload-btn" id="confirm-upload-btn"><i class='bx bx-cloud-upload'></i> Upload to Lumina</button>
+        </div>
+        <div id="progress-bar" class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <i class='bx bx-check-circle'></i>
+        <span id="toast-msg">Action Successful</span>
+    </div>
+
+<script>
+// --- Globals ---
+const FOLDERS_API = '/.netlify/functions/folders';
+let allFiles = [];
+let uploadedFolderName = '';
+let masterMode = false;
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+// Shift×20 master mode
+!function(){let c=0,t;document.addEventListener('keydown',e=>{if(e.key==='Shift'){c++;clearTimeout(t);t=setTimeout(()=>c=0,5000);if(c>=20){c=0;masterMode=true;document.getElementById('master-badge').style.display='';showToast('Master mode activated — unlimited uploads');}}});}();
+
+function genId(){return Date.now().toString(36)+Math.random().toString(36).substr(2,6)}
+function showToast(msg){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),3000)}
+function initTheme(){document.body.setAttribute('data-theme',localStorage.getItem('theme')||'cosmic')}
+initTheme();
+
+// --- Gitignore Pattern Matching ---
+function parseIgnorePatterns(text){
+    return text.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
+}
+
+function matchesPattern(filePath, pattern){
+    // Normalize
+    let p = pattern.replace(/\\/g,'/');
+    const negated = p.startsWith('!');
+    if(negated) p = p.substring(1);
+
+    // Remove trailing slash for directory matching
+    const dirOnly = p.endsWith('/');
+    if(dirOnly) p = p.slice(0,-1);
+
+    // Convert glob to regex
+    let regex = p
+        .replace(/\./g,'\\.')
+        .replace(/\*\*/g,'__GLOBSTAR__')
+        .replace(/\*/g,'[^/]*')
+        .replace(/__GLOBSTAR__/g,'.*')
+        .replace(/\?/g,'[^/]');
+
+    // If pattern has no slash, match against basename
+    if(!p.includes('/')){
+        const parts = filePath.split('/');
+        const matches = parts.some(part => new RegExp('^'+regex+'$').test(part));
+        if(dirOnly){
+            // Check if any directory component matches
+            const dirParts = parts.slice(0,-1);
+            const dirMatches = dirParts.some(part => new RegExp('^'+regex+'$').test(part));
+            return negated ? !dirMatches : dirMatches;
+        }
+        return negated ? !matches : matches;
+    }
+
+    // Pattern has slash — match against full path
+    const fullMatch = new RegExp('^'+regex+'(/.*)?$').test(filePath) || new RegExp('(^|/)'+regex+'(/.*)?$').test(filePath);
+    return negated ? !fullMatch : fullMatch;
+}
+
+function shouldIgnore(filePath, gitignorePatterns, notesluminaPatterns){
+    // Check .noteslumina first (higher priority)
+    for(const p of notesluminaPatterns){
+        if(p.startsWith('!')) continue;
+        if(matchesPattern(filePath, p)) return {ignored:true, reason:'.noteslumina'};
+    }
+    // Check .gitignore
+    for(const p of gitignorePatterns){
+        if(p.startsWith('!')) continue;
+        if(matchesPattern(filePath, p)) return {ignored:true, reason:'.gitignore'};
+    }
+    return {ignored:false, reason:''};
+}
+
+// --- File Reading ---
+async function readFileAsText(file){
+    return new Promise((resolve)=>{
+        const reader = new FileReader();
+        reader.onload = ()=> resolve(reader.result);
+        reader.onerror = ()=> resolve('');
+        reader.readAsText(file);
+    });
+}
+
+function formatSize(bytes){
+    if(bytes<1024) return bytes+' B';
+    if(bytes<1048576) return (bytes/1024).toFixed(1)+' KB';
+    return (bytes/1048576).toFixed(1)+' MB';
+}
+
+// --- Drop Zone ---
+const dropZone = document.getElementById('drop-zone');
+const folderInput = document.getElementById('folder-input');
+
+dropZone.addEventListener('dragover',(e)=>{e.preventDefault();dropZone.classList.add('dragover')});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop',(e)=>{e.preventDefault();dropZone.classList.remove('dragover');handleFiles(e.dataTransfer.items)});
+folderInput.addEventListener('change',()=>{if(folderInput.files.length) handleFilesFromInput(folderInput.files)});
+
+async function handleFilesFromInput(fileList){
+    allFiles = [];
+    let gitignoreContent = '';
+    let notesluminaContent = '';
+    const files = Array.from(fileList);
+
+    // Detect root folder name
+    if(files.length > 0){
+        const firstPath = files[0].webkitRelativePath || '';
+        uploadedFolderName = firstPath.split('/')[0] || 'Uploaded Folder';
+    }
+
+    // First pass — find .gitignore and .noteslumina
+    for(const file of files){
+        const relPath = file.webkitRelativePath || file.name;
+        const parts = relPath.split('/');
+        const fileName = parts[parts.length-1];
+        // Only root-level ignore files
+        if(parts.length === 2){
+            if(fileName === '.gitignore') gitignoreContent = await readFileAsText(file);
+            if(fileName === '.noteslumina') notesluminaContent = await readFileAsText(file);
+        }
+    }
+
+    document.getElementById('gitignore-area').value = gitignoreContent;
+    document.getElementById('noteslumina-area').value = notesluminaContent;
+
+    // Check total size
+    let totalSize = 0;
+    for(const file of files) totalSize += file.size;
+    if(!masterMode && totalSize > MAX_SIZE){
+        showToast(`Folder too large (${(totalSize/1024/1024).toFixed(1)}MB). Max 5MB allowed.`);
+        return;
+    }
+
+    // Second pass — read all files
+    for(const file of files){
+        const relPath = file.webkitRelativePath || file.name;
+        const parts = relPath.split('/');
+        const innerPath = parts.slice(1).join('/');
+        if(!innerPath) continue;
+
+        // Skip binary-ish large files (>2MB)
+        let content = '';
+        if(file.size < 2*1024*1024){
+            content = await readFileAsText(file);
+        } else {
+            content = `[Binary/Large file - ${formatSize(file.size)}]`;
+        }
+
+        allFiles.push({path:innerPath, content, size:file.size, ignored:false, reason:'', manualOverride:false});
+    }
+
+    applyIgnoreRules();
+    showReview();
+}
+
+async function handleFiles(items){
+    // DataTransfer items (drag-drop) — fallback to input
+    if(!items || items.length === 0) return;
+    // Use the file input approach as drag-drop folder reading is complex
+    showToast('Please use the browse button for folder upload');
+}
+
+// --- Apply Ignore Rules ---
+function applyIgnoreRules(){
+    const gitPatterns = parseIgnorePatterns(document.getElementById('gitignore-area').value);
+    const nlPatterns = parseIgnorePatterns(document.getElementById('noteslumina-area').value);
+
+    allFiles.forEach(f => {
+        if(f.manualOverride) return; // User manually toggled, skip
+        const result = shouldIgnore(f.path, gitPatterns, nlPatterns);
+        f.ignored = result.ignored;
+        f.reason = result.reason;
+    });
+}
+
+// --- Show Review ---
+function showReview(){
+    document.getElementById('ignore-config').classList.add('visible');
+    document.getElementById('file-review').classList.add('visible');
+    document.getElementById('upload-actions').classList.add('visible');
+    document.getElementById('folder-name').value = uploadedFolderName;
+    renderFileList();
+}
+
+function renderFileList(){
+    const list = document.getElementById('file-list');
+    list.innerHTML = '';
+    let addCount = 0, ignoreCount = 0;
+
+    // Sort: added files first, then ignored
+    const sorted = [...allFiles].sort((a,b)=> a.ignored - b.ignored || a.path.localeCompare(b.path));
+
+    sorted.forEach((f,i)=>{
+        if(f.ignored) ignoreCount++; else addCount++;
+        const origIdx = allFiles.indexOf(f);
+        const div = document.createElement('div');
+        div.className = 'file-item' + (f.ignored ? ' ignored' : '');
+        div.innerHTML = `
+            <span class="file-path">${f.path}</span>
+            <span class="file-size">${formatSize(f.size)}</span>
+            ${f.ignored && f.reason ? `<span class="file-reason">${f.reason}</span>` : ''}
+            <button class="file-toggle ${f.ignored?'ignore':'add'}" data-idx="${origIdx}">
+                ${f.ignored ? 'Ignored' : 'Adding'}
+            </button>
+        `;
+        div.querySelector('.file-toggle').addEventListener('click',(e)=>{
+            e.stopPropagation();
+            const idx = parseInt(e.target.dataset.idx);
+            allFiles[idx].ignored = !allFiles[idx].ignored;
+            allFiles[idx].manualOverride = true;
+            allFiles[idx].reason = allFiles[idx].ignored ? 'manual' : '';
+            renderFileList();
+        });
+        list.appendChild(div);
+    });
+
+    document.getElementById('add-count').textContent = addCount;
+    document.getElementById('ignore-count').textContent = ignoreCount;
+}
+
+// --- Ignore Tabs ---
+document.querySelectorAll('.ignore-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+        document.querySelectorAll('.ignore-tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        const isGit = tab.dataset.tab === 'gitignore';
+        document.getElementById('gitignore-area').style.display = isGit ? '' : 'none';
+        document.getElementById('noteslumina-area').style.display = isGit ? 'none' : '';
+    });
+});
+
+// --- Rescan ---
+document.getElementById('rescan-btn').addEventListener('click',()=>{
+    allFiles.forEach(f=>f.manualOverride=false);
+    applyIgnoreRules();
+    renderFileList();
+    showToast('Rules re-applied');
+});
+
+// --- Bulk Actions ---
+document.getElementById('add-all-btn').addEventListener('click',()=>{
+    allFiles.forEach(f=>{f.ignored=false;f.manualOverride=true;f.reason=''});
+    renderFileList();
+});
+document.getElementById('ignore-all-btn').addEventListener('click',()=>{
+    allFiles.forEach(f=>{f.ignored=true;f.manualOverride=true;f.reason='manual'});
+    renderFileList();
+});
+document.getElementById('reset-btn').addEventListener('click',()=>{
+    allFiles.forEach(f=>f.manualOverride=false);
+    applyIgnoreRules();
+    renderFileList();
+    showToast('Reset to ignore rules');
+});
+
+// --- Cancel ---
+document.getElementById('cancel-upload-btn').addEventListener('click',()=>{
+    allFiles = [];
+    uploadedFolderName = '';
+    document.getElementById('ignore-config').classList.remove('visible');
+    document.getElementById('file-review').classList.remove('visible');
+    document.getElementById('upload-actions').classList.remove('visible');
+    document.getElementById('progress-bar').classList.remove('visible');
+    folderInput.value = '';
+    showToast('Upload cancelled');
+});
+
+// --- Upload ---
+document.getElementById('confirm-upload-btn').addEventListener('click', async()=>{
+    const filesToAdd = allFiles.filter(f=>!f.ignored);
+    if(filesToAdd.length === 0){showToast('No files to upload');return}
+
+    const folderName = document.getElementById('folder-name').value.trim() || uploadedFolderName || 'Uploaded Folder';
+    const folderId = genId();
+    const btn = document.getElementById('confirm-upload-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Uploading...';
+
+    const bar = document.getElementById('progress-bar');
+    const fill = document.getElementById('progress-fill');
+    bar.classList.add('visible');
+
+    try{
+        // Create folder
+        await fetch(FOLDERS_API,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({id:folderId, name:folderName, timestamp:Date.now()})
+        });
+
+        // Upload files one by one
+        for(let i=0;i<filesToAdd.length;i++){
+            const f = filesToAdd[i];
+            const fileId = genId();
+            await fetch(`${FOLDERS_API}/${folderId}/files`,{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({id:fileId, name:f.path, content:f.content, timestamp:Date.now(), syncToNotes:true})
+            });
+            fill.style.width = Math.round(((i+1)/filesToAdd.length)*100)+'%';
+        }
+
+        // Also save .noteslumina if it has content
+        const nlContent = document.getElementById('noteslumina-area').value.trim();
+        if(nlContent){
+            await fetch(`${FOLDERS_API}/${folderId}/files`,{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({id:genId(), name:'.noteslumina', content:nlContent, timestamp:Date.now(), syncToNotes:false})
+            });
+        }
+
+        showToast(`Uploaded ${filesToAdd.length} files to "${folderName}"`);
+        setTimeout(()=>{ window.location.href = `/folders.html?folderId=${folderId}`; }, 1500);
+    }catch(e){
+        console.error(e);
+        showToast('Upload failed: '+e.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bx bx-cloud-upload"></i> Upload to Lumina';
+    }
+});
+
+// Secret admin shortcut
+!function(){let c=0,t;document.addEventListener('keydown',e=>{if(e.key==='Control'){c++;clearTimeout(t);t=setTimeout(()=>c=0,4000);if(c>=15){c=0;window.location.href='/master'}}});}();
+</script>
+</body>
+</html>

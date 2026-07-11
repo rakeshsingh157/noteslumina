@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         /* Folder Explorer Styles */
         .folder-page { padding: 2rem; max-width: 1200px; margin: 0 auto; padding-top: 100px; }
@@ -210,6 +211,13 @@
         .file-read-body pre blockquote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--text-secondary); margin: 0.5em 0; }
         .file-read-footer { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.5rem; background: rgba(0,0,0,0.2); font-size: 0.85rem; color: var(--text-secondary); }
         .file-read-badges { display: flex; gap: 8px; }
+        .sub-breadcrumb{display:flex;align-items:center;gap:6px;margin-bottom:1rem;flex-wrap:wrap;font-size:.9rem;color:var(--text-secondary);padding:8px 14px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:10px}
+        .sub-breadcrumb a{color:var(--accent);cursor:pointer;text-decoration:none}
+        .sub-breadcrumb a:hover{text-decoration:underline}
+        .sub-breadcrumb i{font-size:.7rem}
+        .sub-breadcrumb.hidden{display:none}
+        .photo-input{display:none}
+        .img-preview{max-width:80px;max-height:60px;border-radius:8px;object-fit:cover}
     </style>
 </head>
 <body>
@@ -226,6 +234,7 @@
         <div class="nav-actions">
             <a href="/" class="icon-btn" title="Notes"><i class='bx bx-notepad'></i></a>
             <a href="/folders.html" class="icon-btn" title="Folders" style="background:var(--accent);"><i class='bx bx-folder'></i></a>
+            <a href="/upload.html" class="icon-btn" title="Upload Folder"><i class='bx bx-upload'></i></a>
             <a href="/gallery.html" class="icon-btn" title="Gallery"><i class='bx bx-image'></i></a>
         </div>
     </nav>
@@ -257,10 +266,14 @@
                 <h1 id="folder-title"><i class='bx bx-folder-open'></i> <span></span></h1>
                 <div class="action-bar">
                     <button id="create-file-btn" class="action-btn"><i class='bx bx-file-plus'></i> New File</button>
+                    <button id="upload-photo-btn" class="action-btn secondary"><i class='bx bx-image-add'></i> Add Photo</button>
+                    <button id="download-zip-btn" class="action-btn secondary"><i class='bx bx-download'></i> Download ZIP</button>
                     <button id="rename-folder-btn" class="action-btn secondary"><i class='bx bx-rename'></i> Rename</button>
                     <button id="folder-mail-btn" class="action-btn secondary" title="Email Folder"><i class='bx bx-mail-send'></i> Email Folder</button>
+                    <input type="file" id="photo-file-input" class="photo-input" accept="image/*" multiple />
                 </div>
             </div>
+            <div id="sub-breadcrumb" class="sub-breadcrumb hidden"></div>
             <div id="files-grid" class="items-grid"></div>
             <div id="files-empty" class="empty-folder hidden">
                 <i class='bx bx-file'></i>
@@ -388,6 +401,8 @@
 
         // --- State ---
         let currentFolderId = null;
+        let currentSubPath = '';
+        let allFolderFiles = [];
 
         // --- Init ---
         document.addEventListener('DOMContentLoaded', async () => {
@@ -563,16 +578,17 @@
 
         async function openFolder(folderId, folderName) {
             currentFolderId = folderId;
+            currentSubPath = '';
             document.getElementById('folders-view').classList.add('hidden');
             document.getElementById('folder-detail-view').classList.remove('hidden');
             document.getElementById('current-folder-name').textContent = folderName;
             document.getElementById('folder-title').querySelector('span').textContent = folderName;
-
             await loadFiles(folderId);
         }
 
         document.getElementById('back-to-folders').addEventListener('click', () => {
             currentFolderId = null;
+            currentSubPath = '';
             document.getElementById('folder-detail-view').classList.add('hidden');
             document.getElementById('folders-view').classList.remove('hidden');
             loadFolders();
@@ -604,55 +620,89 @@
             sendEmail('folder', currentFolderId, email);
         });
 
+        function updateSubBreadcrumb(){
+            const el=document.getElementById('sub-breadcrumb');
+            if(!currentSubPath){el.classList.add('hidden');return;}
+            el.classList.remove('hidden');
+            const parts=currentSubPath.split('/').filter(Boolean);
+            let html='<a onclick="currentSubPath=\'\';loadFiles(currentFolderId)"><i class="bx bx-folder"></i> Root</a>';
+            let path='';
+            parts.forEach((p,i)=>{
+                path+=p+'/';
+                const pp=path;
+                if(i<parts.length-1) html+=` <i class='bx bx-chevron-right'></i> <a onclick="currentSubPath='${pp}';loadFiles(currentFolderId)">${p}</a>`;
+                else html+=` <i class='bx bx-chevron-right'></i> <span>${p}</span>`;
+            });
+            el.innerHTML=html;
+        }
+
         async function loadFiles(folderId) {
             const grid = document.getElementById('files-grid');
             grid.innerHTML = '<div style="color:var(--text-secondary);text-align:center;width:100%;padding:2rem;"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem;"></i><br>Loading...</div>';
-
             try {
                 const res = await fetch(`${FOLDERS_API}/${folderId}/files`);
                 const data = await res.json();
-                const files = data.files || [];
+                allFolderFiles = data.files || [];
                 grid.innerHTML = '';
-
-                if (files.length === 0) {
+                updateSubBreadcrumb();
+                const currentFiles = allFolderFiles.filter(f => f.name.startsWith(currentSubPath));
+                if (currentFiles.length === 0) {
                     document.getElementById('files-empty').classList.remove('hidden');
                     return;
                 }
                 document.getElementById('files-empty').classList.add('hidden');
-
-                files.forEach(f => {
+                const subfolders = new Set();
+                const directFiles = [];
+                currentFiles.forEach(f => {
+                    const rel = f.name.substring(currentSubPath.length);
+                    const si = rel.indexOf('/');
+                    if (si > -1) subfolders.add(rel.substring(0, si));
+                    else directFiles.push(f);
+                });
+                // Render subfolder cards
+                subfolders.forEach(sub => {
+                    const subPath = currentSubPath + sub + '/';
+                    const cnt = allFolderFiles.filter(f => f.name.startsWith(subPath)).length;
                     const card = document.createElement('div');
-                    card.className = 'file-card';
-                    const preview = (f.content || '').substring(0, 60);
-                    const isLocked = !!f.password_hash;
-                    const isFinal = !!f.immutable;
-                    card.innerHTML = `
-                        <div class="item-actions">
-                            <button class="item-action-btn danger" data-delete="${f.id}" title="Delete"><i class='bx bx-trash'></i></button>
-                        </div>
-                        <div class="file-icon"><i class='bx ${isLocked ? 'bxs-lock' : 'bxs-file-doc'}'></i></div>
-                        <div class="file-name">${isLocked ? '🔒 ' : ''}${f.name}</div>
-                        <div class="file-meta">${isLocked ? '<i>Password protected</i>' : (preview || 'Empty file')}</div>
-                        <div class="file-badges">
-                            ${isLocked ? '<span class="file-badge locked"><i class="bx bxs-lock-alt"></i> Protected</span>' : ''}
-                            ${isFinal ? '<span class="file-badge final"><i class="bx bxs-check-shield"></i> Final</span>' : ''}
-                        </div>
-                    `;
-                    card.addEventListener('click', (e) => {
-                        if (e.target.closest('[data-delete]')) return;
-                        if (f.password_hash) {
-                            // Locked — go to editor for unlock
-                            openFileEditor(f);
-                        } else {
-                            // Not locked — show read modal first
-                            openFileReadModal(f);
+                    card.className = 'folder-card';
+                    card.innerHTML = `<div class="item-actions"><button class="item-action-btn danger" data-delsub title="Delete Subfolder"><i class='bx bx-trash'></i></button></div><div class="folder-icon"><i class='bx bxs-folder'></i></div><div class="folder-name">${sub}</div><div class="folder-meta">${cnt} file${cnt!==1?'s':''}</div>`;
+                    card.addEventListener('click', e => {
+                        if (e.target.closest('[data-delsub]')) return;
+                        currentSubPath = subPath;
+                        loadFiles(folderId);
+                    });
+                    card.querySelector('[data-delsub]').addEventListener('click', async e => {
+                        e.stopPropagation();
+                        const ok = await showConfirm('Delete Subfolder?', `Delete "${sub}" and all ${cnt} files inside?`);
+                        if (ok) {
+                            const del = allFolderFiles.filter(f => f.name.startsWith(subPath));
+                            for (const d of del) await fetch(`${FOLDERS_API}/${folderId}/files/${d.id}`, {method:'DELETE'});
+                            showToast('Subfolder Deleted');
+                            loadFiles(folderId);
                         }
                     });
-                    card.querySelector('[data-delete]').addEventListener('click', async (e) => {
+                    grid.appendChild(card);
+                });
+                // Render file cards
+                directFiles.forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'file-card';
+                    const dn = f.name.substring(currentSubPath.length);
+                    const isImg = /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(dn) || (f.content && f.content.startsWith('data:image'));
+                    const isLocked = !!f.password_hash;
+                    const isFinal = !!f.immutable;
+                    const preview = isImg ? '' : (f.content||'').substring(0,60);
+                    card.innerHTML = `<div class="item-actions"><button class="item-action-btn danger" data-delete="${f.id}" title="Delete"><i class='bx bx-trash'></i></button></div>${isImg && f.content && f.content.startsWith('data:image') ? `<img src="${f.content}" class="img-preview" />` : `<div class="file-icon"><i class='bx ${isImg?'bxs-image':(isLocked?'bxs-lock':'bxs-file-doc')}'></i></div>`}<div class="file-name">${isLocked?'🔒 ':''}${dn}</div><div class="file-meta">${isLocked?'<i>Password protected</i>':(preview||(isImg?'Image':'Empty file'))}</div><div class="file-badges">${isLocked?'<span class="file-badge locked"><i class="bx bxs-lock-alt"></i> Protected</span>':''}${isFinal?'<span class="file-badge final"><i class="bx bxs-check-shield"></i> Final</span>':''}</div>`;
+                    card.addEventListener('click', e => {
+                        if (e.target.closest('[data-delete]')) return;
+                        if (isImg && f.content && f.content.startsWith('data:image')) { window.open(f.content,'_blank'); return; }
+                        if (f.password_hash) openFileEditor(f); else openFileReadModal(f);
+                    });
+                    card.querySelector('[data-delete]').addEventListener('click', async e => {
                         e.stopPropagation();
-                        const ok = await showConfirm('Delete File?', `Delete "${f.name}"? This cannot be undone.`);
+                        const ok = await showConfirm('Delete File?', `Delete "${dn}"? This cannot be undone.`);
                         if (ok) {
-                            await fetch(`${FOLDERS_API}/${folderId}/files/${f.id}`, { method: 'DELETE' });
+                            await fetch(`${FOLDERS_API}/${folderId}/files/${f.id}`,{method:'DELETE'});
                             showToast('File Deleted');
                             loadFiles(folderId);
                         }
@@ -668,13 +718,66 @@
             const name = await showInputModal('New File', 'File name...');
             if (!name) return;
             const fileId = genId();
+            const fullName = currentSubPath + name;
             await fetch(`${FOLDERS_API}/${currentFolderId}/files`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: fileId, name, content: '', timestamp: Date.now(), syncToNotes: true })
+                body: JSON.stringify({ id: fileId, name: fullName, content: '', timestamp: Date.now(), syncToNotes: true })
             });
             showToast('File Created');
-            openFileEditor({ id: fileId, name, content: '', folder_id: currentFolderId, password_hash: null, immutable: false });
+            openFileEditor({ id: fileId, name: fullName, content: '', folder_id: currentFolderId, password_hash: null, immutable: false });
+            loadFiles(currentFolderId);
+        });
+
+        // --- Download ZIP ---
+        document.getElementById('download-zip-btn').addEventListener('click', async () => {
+            if (!currentFolderId || allFolderFiles.length === 0) { showToast('No files to download'); return; }
+            const folderName = document.getElementById('current-folder-name').textContent || 'folder';
+            showToast('Generating ZIP...');
+            try {
+                const zip = new JSZip();
+                allFolderFiles.forEach(f => {
+                    const content = (f.content && f.content.startsWith('data:image')) ?
+                        f.content.split(',')[1] : f.content || '';
+                    const isBase64 = f.content && f.content.startsWith('data:image');
+                    zip.file(f.name, content, isBase64 ? {base64: true} : {});
+                });
+                const blob = await zip.generateAsync({type: 'blob'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `${folderName}.zip`;
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a); URL.revokeObjectURL(url);
+                showToast('ZIP downloaded!');
+            } catch (e) { showToast('ZIP generation failed'); console.error(e); }
+        });
+
+        // --- Upload Photo ---
+        document.getElementById('upload-photo-btn').addEventListener('click', () => {
+            if (!currentFolderId) return;
+            document.getElementById('photo-file-input').click();
+        });
+        document.getElementById('photo-file-input').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (!files.length || !currentFolderId) return;
+            showToast(`Uploading ${files.length} photo(s)...`);
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                const base64 = await new Promise(r => {
+                    const reader = new FileReader();
+                    reader.onload = () => r(reader.result);
+                    reader.readAsDataURL(file);
+                });
+                const fileId = genId();
+                const fullName = currentSubPath + file.name;
+                await fetch(`${FOLDERS_API}/${currentFolderId}/files`, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({id:fileId, name:fullName, content:base64, timestamp:Date.now(), syncToNotes:false})
+                });
+            }
+            e.target.value = '';
+            showToast('Photos uploaded!');
             loadFiles(currentFolderId);
         });
 
