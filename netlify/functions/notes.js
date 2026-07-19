@@ -54,9 +54,24 @@ exports.handler = async (event, context) => {
     const method = event.httpMethod;
 
     try {
-        // GET /api/notes - Get all notes
         if (method === 'GET' && path === '') {
-            const result = await pool.query('SELECT * FROM notes');
+            const params = event.queryStringParameters || {};
+            const limit = parseInt(params.limit) || 100000;
+            const offset = parseInt(params.offset) || 0;
+            const search = params.search || '';
+
+            let result;
+            if (search) {
+                result = await pool.query(
+                    `SELECT * FROM notes 
+                     WHERE (title ILIKE $1 OR content ILIKE $1) 
+                     ORDER BY timestamp DESC LIMIT $2 OFFSET $3`,
+                    [`%${search}%`, limit, offset]
+                );
+            } else {
+                result = await pool.query('SELECT * FROM notes ORDER BY timestamp DESC LIMIT $1 OFFSET $2', [limit, offset]);
+            }
+
             return {
                 statusCode: 200,
                 headers,

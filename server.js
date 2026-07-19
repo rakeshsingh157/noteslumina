@@ -408,10 +408,24 @@ app.post('/api/send-mail', mailRateLimiter, async (req, res) => {
     }
 });
 
-// Get all notes
+// Get notes (paginated & searchable)
 app.get('/api/notes', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM notes');
+        const limit = parseInt(req.query.limit) || 100000;
+        const offset = parseInt(req.query.offset) || 0;
+        const search = req.query.search || '';
+
+        let result;
+        if (search) {
+            result = await pool.query(
+                `SELECT * FROM notes 
+                 WHERE (title ILIKE $1 OR content ILIKE $1) 
+                 ORDER BY timestamp DESC LIMIT $2 OFFSET $3`,
+                [`%${search}%`, limit, offset]
+            );
+        } else {
+            result = await pool.query('SELECT * FROM notes ORDER BY timestamp DESC LIMIT $1 OFFSET $2', [limit, offset]);
+        }
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });

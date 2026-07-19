@@ -69,6 +69,17 @@ async function fetchNotes() {
     }
 }
 
+async function fetchNotesPaginated(limit, offset, search = '') {
+    try {
+        const url = `${API_URL}?limit=${limit}&offset=${offset}&search=${encodeURIComponent(search)}`;
+        const res = await fetch(url);
+        return await res.json();
+    } catch (e) {
+        console.error("API Error", e);
+        return [];
+    }
+}
+
 async function fetchNote(id) {
     try {
         const res = await fetch(`${API_URL}/${id}`);
@@ -167,35 +178,59 @@ function showEditor(id) {
 }
 
 // --- Dashboard Logic ---
+let notesLimit = 9;
+let notesOffset = 0;
+let hasMoreNotes = true;
+let searchQuery = '';
 
-async function loadDashboard() {
-    notesGrid.innerHTML = Array(9).fill(0).map(() => `
-        <div class="note-card skeleton-card">
-            <div class="skeleton-title"></div>
-            <div class="skeleton-text"></div>
-            <div class="skeleton-text short"></div>
-            <div class="skeleton-meta">
-                <div class="skeleton-date"></div>
-                <div class="skeleton-badge"></div>
+async function loadDashboard(append = false) {
+    if (!append) {
+        notesOffset = 0;
+        hasMoreNotes = true;
+        notesGrid.innerHTML = Array(9).fill(0).map(() => `
+            <div class="note-card skeleton-card">
+                <div class="skeleton-title"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text short"></div>
+                <div class="skeleton-meta">
+                    <div class="skeleton-date"></div>
+                    <div class="skeleton-badge"></div>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+    } else {
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        if (loadMoreBtn) {
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Loading...";
+        }
+    }
 
-    // Migration Check
-    await migrateLocalToDB();
+    // Migration Check (only on fresh page load, not appending)
+    if (!append) {
+        await migrateLocalToDB();
+    }
 
-    const notes = await fetchNotes();
-    notesGrid.innerHTML = '';
+    const notes = await fetchNotesPaginated(notesLimit, notesOffset, searchQuery);
+    
+    if (!append) {
+        notesGrid.innerHTML = '';
+    } else {
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        if (loadMoreBtn) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.innerHTML = "<i class='bx bx-dots-horizontal-rounded'></i> Load More Notes";
+        }
+    }
 
-    if (notes.length === 0) {
+    if (notes.length === 0 && !append) {
         emptyState.classList.remove('hidden');
+        const loadMoreContainer = document.getElementById('load-more-container');
+        if (loadMoreContainer) loadMoreContainer.style.display = 'none';
         return;
     }
 
     emptyState.classList.add('hidden');
-
-    // Sort by newest first
-    notes.sort((a, b) => b.timestamp - a.timestamp);
 
     notes.forEach(note => {
         const mappedNote = {
@@ -209,6 +244,14 @@ async function loadDashboard() {
         const card = createNoteCard(mappedNote);
         notesGrid.appendChild(card);
     });
+
+    const loadMoreContainer = document.getElementById('load-more-container');
+    if (notes.length < notesLimit) {
+        hasMoreNotes = false;
+        if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+    } else {
+        if (loadMoreContainer) loadMoreContainer.style.display = 'block';
+    }
 }
 
 // --- Migration Logic ---
@@ -818,26 +861,21 @@ bc.onmessage = (event) => {
     }
 };
 
-// Search
+// Search (Debounced & Server-side)
+let searchTimeout = null;
 searchInput.addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    const cards = document.querySelectorAll('.note-card');
-    let hasVisible = false;
-
-    cards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        if (text.includes(term)) {
-            card.style.display = 'flex';
-            hasVisible = true;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-
-    if (!hasVisible) {
-        emptyState.classList.remove('hidden');
-        emptyState.querySelector('p').textContent = "No matching notes found.";
-    } else {
-        emptyState.classList.add('hidden');
-    }
+    searchQuery = e.target.value.trim();
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadDashboard(false);
+    }, 300);
 });
+
+// Load More Button Click
+const loadMoreBtn = document.getElementById('load-more-btn');
+if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+        notesOffset += notesLimit;
+        loadDashboard(true);
+    });
+}
