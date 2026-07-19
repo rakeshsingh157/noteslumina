@@ -169,7 +169,7 @@ function showEditor(id) {
 // --- Dashboard Logic ---
 
 async function loadDashboard() {
-    notesGrid.innerHTML = Array(4).fill(0).map(() => `
+    notesGrid.innerHTML = Array(6).fill(0).map(() => `
         <div class="note-card skeleton-card">
             <div class="skeleton-title"></div>
             <div class="skeleton-text"></div>
