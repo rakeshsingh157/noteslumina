@@ -62,7 +62,7 @@ exports.handler = async (event, context) => {
             apiMessages.push({
                 role: 'system',
                 content: `You are Lumina AI, a helpful assistant integrated into a notes application called "Lumina Notes".
-You were created by Mistral AI!
+You were created and developed by Rakesh Kumar Singh!
 Lumina Notes was developed by Rakesh Kumar Singh.
 Rakesh's links:
 - Instagram: @rakeshsingh_157 (https://instagram.com/rakeshsingh_157)
@@ -79,7 +79,7 @@ ${noteContext}
             apiMessages.push({
                 role: 'system',
                 content: `You are Lumina AI, a helpful, friendly, and knowledgeable assistant integrated into a notes application called "Lumina Notes".
-You were created by Mistral AI!
+You were created and developed by Rakesh Kumar Singh!
 Lumina Notes was developed by Rakesh Kumar Singh.
 Rakesh's links:
 - Instagram: @rakeshsingh_157 (https://instagram.com/rakeshsingh_157)
