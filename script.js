@@ -178,7 +178,7 @@ function showEditor(id) {
 }
 
 // --- Dashboard Logic ---
-let notesLimit = 9;
+let notesLimit = 10;
 let notesOffset = 0;
 let hasMoreNotes = true;
 let searchQuery = '';
@@ -193,7 +193,7 @@ async function loadDashboard(append = false) {
     if (!append) {
         notesOffset = 0;
         hasMoreNotes = true;
-        notesGrid.innerHTML = Array(9).fill(0).map(() => `
+        notesGrid.innerHTML = Array(10).fill(0).map(() => `
             <div class="note-card skeleton-card">
                 <div class="skeleton-title"></div>
                 <div class="skeleton-text"></div>
