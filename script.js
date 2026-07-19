@@ -169,7 +169,17 @@ function showEditor(id) {
 // --- Dashboard Logic ---
 
 async function loadDashboard() {
-    notesGrid.innerHTML = '<div class="loading" style="color:white; text-align:center; width:100%; padding:2rem;"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem;"></i><br>Loading Notes...</div>';
+    notesGrid.innerHTML = Array(4).fill(0).map(() => `
+        <div class="note-card skeleton-card">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-text"></div>
+            <div class="skeleton-text short"></div>
+            <div class="skeleton-meta">
+                <div class="skeleton-date"></div>
+                <div class="skeleton-badge"></div>
+            </div>
+        </div>
+    `).join('');
 
     // Migration Check
     await migrateLocalToDB();

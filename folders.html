@@ -532,7 +532,15 @@
 
         async function loadFolders() {
             const grid = document.getElementById('folders-grid');
-            grid.innerHTML = '<div style="color:var(--text-secondary);text-align:center;width:100%;padding:2rem;"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem;"></i><br>Loading...</div>';
+            grid.innerHTML = Array(4).fill(0).map(() => `
+                <div class="skeleton-folder">
+                    <div class="skeleton-icon"></div>
+                    <div class="skeleton-folder-info">
+                        <div class="skeleton-folder-title"></div>
+                        <div class="skeleton-folder-sub"></div>
+                    </div>
+                </div>
+            `).join('');
 
             try {
                 const res = await fetch(FOLDERS_API);
@@ -652,7 +660,15 @@
 
         async function loadFiles(folderId) {
             const grid = document.getElementById('files-grid');
-            grid.innerHTML = '<div style="color:var(--text-secondary);text-align:center;width:100%;padding:2rem;"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem;"></i><br>Loading...</div>';
+            grid.innerHTML = Array(4).fill(0).map(() => `
+                <div class="skeleton-folder">
+                    <div class="skeleton-icon"></div>
+                    <div class="skeleton-folder-info">
+                        <div class="skeleton-folder-title"></div>
+                        <div class="skeleton-folder-sub"></div>
+                    </div>
+                </div>
+            `).join('');
             try {
                 const res = await fetch(`${FOLDERS_API}/${folderId}/files`);
                 const data = await res.json();

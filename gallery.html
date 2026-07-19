@@ -764,7 +764,15 @@
 
         async function loadGallery() {
             const grid = document.getElementById('gallery-grid');
-            grid.innerHTML = '<div style="color:var(--text-secondary);text-align:center;width:100%;padding:2rem;"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem;"></i><br>Loading...</div>';
+            grid.innerHTML = Array(4).fill(0).map(() => `
+                <div class="skeleton-gallery-card">
+                    <div class="skeleton-image-placeholder"></div>
+                    <div class="skeleton-meta" style="margin-top:0;">
+                        <div class="skeleton-date" style="width:40%;"></div>
+                        <div class="skeleton-badge" style="width:25%;"></div>
+                    </div>
+                </div>
+            `).join('');
 
             try {
                 const res = await fetch(GALLERY_API);

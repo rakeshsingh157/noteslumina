@@ -64,6 +64,8 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     animation: gradientBG 15s ease infinite;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes gradientBG {
@@ -1183,4 +1185,124 @@ textarea {
     color: var(--accent);
     transform: translateY(-4px);
     text-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+}
+
+/* Page Flex Layout Fixes */
+#app-container, .folder-page, .gallery-page, .upload-page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Skeleton Loading styles */
+.skeleton-card {
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.skeleton-title, .skeleton-text, .skeleton-date, .skeleton-badge, .skeleton-icon, .skeleton-folder-title, .skeleton-folder-sub, .skeleton-image-placeholder {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.04) 25%, 
+        rgba(255, 255, 255, 0.08) 50%, 
+        rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.6s infinite linear;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.skeleton-title {
+    height: 1.2rem;
+    width: 60%;
+    margin-bottom: 1rem;
+}
+
+.skeleton-text {
+    height: 0.85rem;
+    width: 90%;
+    margin-bottom: 0.6rem;
+}
+
+.skeleton-text.short {
+    width: 50%;
+}
+
+.skeleton-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    width: 100%;
+}
+
+.skeleton-date {
+    height: 0.75rem;
+    width: 25%;
+}
+
+.skeleton-badge {
+    height: 0.75rem;
+    width: 20%;
+}
+
+/* Folders / Files Skeletons */
+.skeleton-folder {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 1.25rem 1.5rem !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px;
+    height: 70px;
+}
+
+.skeleton-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.skeleton-folder-info {
+    flex: 1;
+}
+
+.skeleton-folder-title {
+    height: 1rem;
+    width: 55%;
+    margin-bottom: 0.4rem;
+}
+
+.skeleton-folder-sub {
+    height: 0.75rem;
+    width: 30%;
+}
+
+/* Gallery Skeletons */
+.skeleton-gallery-card {
+    height: 200px;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px;
+    padding: 12px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.skeleton-image-placeholder {
+    flex: 1;
+    border-radius: 8px;
+    margin-bottom: 10px;
 }
