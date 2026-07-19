@@ -580,7 +580,10 @@ noteArea.addEventListener('input', triggerAutoSave);
 noteTitleInput.addEventListener('input', triggerAutoSave);
 
 saveBtn.addEventListener('click', () => {
+    triggerAutoSave();
     showToast("Note Saved Successfully");
+    window.history.pushState({ path: window.location.pathname }, '', window.location.pathname);
+    showHome();
 });
 
 editorMailBtn.addEventListener('click', async () => {
