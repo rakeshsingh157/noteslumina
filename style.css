@@ -1131,3 +1131,56 @@ textarea {
     gap: 10px;
     justify-content: flex-end;
 }
+
+/* Site Footer Styles */
+.site-footer {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    margin-top: auto;
+    border-top: 1px solid var(--glass-border);
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(15px);
+    width: 100%;
+    z-index: 50;
+}
+
+.site-footer p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.8rem;
+    font-weight: 400;
+}
+
+.site-footer a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.site-footer a:hover {
+    color: var(--blob-1);
+    text-decoration: underline;
+}
+
+.footer-socials {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 0.8rem;
+}
+
+.footer-socials a {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer-socials a:hover {
+    color: var(--accent);
+    transform: translateY(-4px);
+    text-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+}
