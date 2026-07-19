@@ -1306,3 +1306,13 @@ textarea {
     border-radius: 8px;
     margin-bottom: 10px;
 }
+
+/* Enforce 3-Column Desktop Grid Layout */
+@media (min-width: 1024px) {
+    .notes-grid, .items-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+    .gallery-grid {
+        columns: 3 !important;
+    }
+}

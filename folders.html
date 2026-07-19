@@ -532,7 +532,7 @@
 
         async function loadFolders() {
             const grid = document.getElementById('folders-grid');
-            grid.innerHTML = Array(6).fill(0).map(() => `
+            grid.innerHTML = Array(9).fill(0).map(() => `
                 <div class="skeleton-folder">
                     <div class="skeleton-icon"></div>
                     <div class="skeleton-folder-info">
@@ -660,7 +660,7 @@
 
         async function loadFiles(folderId) {
             const grid = document.getElementById('files-grid');
-            grid.innerHTML = Array(6).fill(0).map(() => `
+            grid.innerHTML = Array(9).fill(0).map(() => `
                 <div class="skeleton-folder">
                     <div class="skeleton-icon"></div>
                     <div class="skeleton-folder-info">
