@@ -182,8 +182,14 @@ let notesLimit = 9;
 let notesOffset = 0;
 let hasMoreNotes = true;
 let searchQuery = '';
+let isNotesLoading = false;
 
 async function loadDashboard(append = false) {
+    if (isNotesLoading) return;
+    isNotesLoading = true;
+
+    const loadMoreContainer = document.getElementById('load-more-container');
+
     if (!append) {
         notesOffset = 0;
         hasMoreNotes = true;
@@ -199,11 +205,7 @@ async function loadDashboard(append = false) {
             </div>
         `).join('');
     } else {
-        const loadMoreBtn = document.getElementById('load-more-btn');
-        if (loadMoreBtn) {
-            loadMoreBtn.disabled = true;
-            loadMoreBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Loading...";
-        }
+        if (loadMoreContainer) loadMoreContainer.style.display = 'block';
     }
 
     // Migration Check (only on fresh page load, not appending)
@@ -215,18 +217,12 @@ async function loadDashboard(append = false) {
     
     if (!append) {
         notesGrid.innerHTML = '';
-    } else {
-        const loadMoreBtn = document.getElementById('load-more-btn');
-        if (loadMoreBtn) {
-            loadMoreBtn.disabled = false;
-            loadMoreBtn.innerHTML = "<i class='bx bx-dots-horizontal-rounded'></i> Load More Notes";
-        }
     }
 
     if (notes.length === 0 && !append) {
         emptyState.classList.remove('hidden');
-        const loadMoreContainer = document.getElementById('load-more-container');
         if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+        isNotesLoading = false;
         return;
     }
 
@@ -245,13 +241,14 @@ async function loadDashboard(append = false) {
         notesGrid.appendChild(card);
     });
 
-    const loadMoreContainer = document.getElementById('load-more-container');
     if (notes.length < notesLimit) {
         hasMoreNotes = false;
         if (loadMoreContainer) loadMoreContainer.style.display = 'none';
     } else {
         if (loadMoreContainer) loadMoreContainer.style.display = 'block';
     }
+
+    isNotesLoading = false;
 }
 
 // --- Migration Logic ---
@@ -871,11 +868,17 @@ searchInput.addEventListener('input', (e) => {
     }, 300);
 });
 
-// Load More Button Click
-const loadMoreBtn = document.getElementById('load-more-btn');
-if (loadMoreBtn) {
-    loadMoreBtn.addEventListener('click', () => {
-        notesOffset += notesLimit;
-        loadDashboard(true);
+// Infinite Scroll (Intersection Observer)
+const sentinel = document.getElementById('load-more-container');
+if (sentinel) {
+    const observer = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMoreNotes && !isNotesLoading) {
+            notesOffset += notesLimit;
+            loadDashboard(true);
+        }
+    }, {
+        rootMargin: '150px' // Start loading next page 150px before reaching the bottom
     });
+    observer.observe(sentinel);
 }

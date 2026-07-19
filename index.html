@@ -62,11 +62,11 @@
                 <div id="notes-grid" class="notes-grid">
                     <!-- Note Cards Injected Here -->
                 </div>
-                <!-- Load More Button -->
-                <div class="load-more-container" id="load-more-container" style="text-align: center; margin-top: 2.5rem; display: none;">
-                    <button id="load-more-btn" class="glass-btn" style="padding: 10px 30px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
-                        <i class='bx bx-dots-horizontal-rounded'></i> Load More Notes
-                    </button>
+                <!-- Infinite Scroll Loading Indicator -->
+                <div class="load-more-container" id="load-more-container" style="text-align: center; margin-top: 2.5rem; display: none; padding: 1.5rem 0;">
+                    <div class="infinite-scroll-loader" style="color: var(--text-secondary); display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem;">
+                        <i class='bx bx-loader-alt bx-spin' style="font-size: 1.5rem; color: var(--accent);"></i> Loading more notes...
+                    </div>
                 </div>
                 <div id="empty-state" class="empty-state hidden">
                     <i class='bx bx-ghost'></i>
