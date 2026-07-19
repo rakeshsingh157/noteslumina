@@ -47,7 +47,9 @@ const readDeleteBtn = document.getElementById('read-delete-btn');
 const readDownloadBtn = document.getElementById('read-download-btn');
 const readCopyBtn = document.getElementById('read-copy-btn');
 const readMailBtn = document.getElementById('read-mail-btn');
+const readAiBtn = document.getElementById('read-ai-btn');
 const editorMailBtn = document.getElementById('editor-mail-btn');
+const editorAiBtn = document.getElementById('editor-ai-btn');
 
 // --- State ---
 let currentNoteId = null;
@@ -236,6 +238,7 @@ function createNoteCard(note) {
     const isImmutable = !!note.immutable;
 
     div.innerHTML = `
+        <button class="note-card-ai-btn" title="Ask AI about this note"><i class='bx bx-bot'></i></button>
         <h3>${isLocked ? '🔒 ' : ''}${title}</h3>
         <p>${isLocked ? '<i>This note is password protected.</i>' : preview}</p>
         <div class="meta">
@@ -246,6 +249,13 @@ function createNoteCard(note) {
             </div>
         </div>
     `;
+
+    // AI button click
+    const aiBtn = div.querySelector('.note-card-ai-btn');
+    aiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.location.href = `/ai-chat.html?noteId=${note.id}`;
+    });
 
     div.addEventListener('click', () => {
         if (isLocked) {
@@ -353,6 +363,11 @@ function openReadModal(note) {
             return;
         }
         sendEmail('note', note.id, email);
+    };
+
+    readAiBtn.onclick = () => {
+        readModal.classList.add('hidden');
+        window.location.href = `/ai-chat.html?noteId=${note.id}`;
     };
 
     readModal.classList.remove('hidden');
@@ -567,6 +582,11 @@ editorMailBtn.addEventListener('click', async () => {
         return;
     }
     sendEmail('note', currentNoteId, email);
+});
+
+editorAiBtn.addEventListener('click', () => {
+    if (!currentNoteId) return;
+    window.location.href = `/ai-chat.html?noteId=${currentNoteId}`;
 });
 
 // Password Setup — Lock Toggle

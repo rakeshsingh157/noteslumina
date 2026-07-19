@@ -74,6 +74,16 @@
   to = "/upload.html"
   status = 200
 
+[[redirects]]
+  from = "/api/ai-chat"
+  to = "/.netlify/functions/ai-chat"
+  status = 200
+
+[[redirects]]
+  from = "/ai-chat"
+  to = "/ai-chat.html"
+  status = 200
+
 # --- SPA Fallback (must be last) ---
 
 [[redirects]]

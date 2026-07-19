@@ -385,6 +385,54 @@ body {
     flex-wrap: wrap;
 }
 
+/* AI Button on Note Cards */
+.note-card-ai-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.3), rgba(125, 95, 255, 0.3));
+    border: 1px solid rgba(108, 92, 231, 0.4);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    opacity: 0;
+    z-index: 2;
+}
+
+.note-card:hover .note-card-ai-btn {
+    opacity: 1;
+}
+
+.note-card-ai-btn:hover {
+    background: linear-gradient(135deg, var(--accent), var(--blob-1));
+    transform: scale(1.15);
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.5);
+}
+
+/* Active Nav Icon */
+.icon-btn.active-nav {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* AI Glass Button (for editor/read modal) */
+.ai-glass-btn {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), rgba(125, 95, 255, 0.2));
+    border: 1px solid rgba(108, 92, 231, 0.4);
+}
+
+.ai-glass-btn:hover {
+    background: linear-gradient(135deg, var(--accent), var(--blob-1));
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.4);
+}
+
 /* Immutable Checkbox */
 .immutable-wrapper {
     display: flex;

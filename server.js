@@ -4,6 +4,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const nodemailer = require('nodemailer');
 const path = require('path');
+const https = require('https');
 
 const app = express();
 
@@ -46,6 +47,113 @@ app.get('/master', (req, res) => {
 
 app.get('/upload', (req, res) => {
     res.sendFile(path.join(__dirname, 'upload.html'));
+});
+
+app.get('/ai-chat', (req, res) => {
+    res.sendFile(path.join(__dirname, 'ai-chat.html'));
+});
+
+// --- AI Chat API Route ---
+const aiRateLimitMap = new Map();
+
+function callMistralAPI(apiKey, messages) {
+    return new Promise((resolve, reject) => {
+        const postData = JSON.stringify({
+            model: 'mistral-small-latest',
+            messages: messages,
+            max_tokens: 1024
+        });
+
+        const options = {
+            hostname: 'api.mistral.ai',
+            port: 443,
+            path: '/v1/chat/completions',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.choices && parsed.choices.length > 0) {
+                        resolve(parsed.choices[0].message.content);
+                    } else if (parsed.error) {
+                        reject(new Error(parsed.error.message || 'Mistral API error'));
+                    } else {
+                        reject(new Error('Unexpected API response format'));
+                    }
+                } catch (e) {
+                    reject(new Error('Failed to parse API response'));
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.write(postData);
+        req.end();
+    });
+}
+
+app.post('/api/ai-chat', (req, res, next) => {
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const now = Date.now();
+    if (!aiRateLimitMap.has(ip)) aiRateLimitMap.set(ip, []);
+    let timestamps = aiRateLimitMap.get(ip).filter(t => now - t < 60000);
+    if (timestamps.length >= 10) {
+        return res.status(429).json({ error: 'Rate limit exceeded. Max 10 requests per minute.' });
+    }
+    timestamps.push(now);
+    aiRateLimitMap.set(ip, timestamps);
+    next();
+}, async (req, res) => {
+    try {
+        const { messages, noteContext } = req.body;
+
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({ error: 'Messages array is required' });
+        }
+
+        const apiKey = process.env.MISTRAL_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'AI service not configured. Add MISTRAL_API_KEY to .env' });
+        }
+
+        const apiMessages = [];
+
+        if (noteContext) {
+            apiMessages.push({
+                role: 'system',
+                content: `You are Lumina AI, a helpful assistant integrated into a notes application called "Lumina Notes". The user is asking questions about the following note content. Answer questions based on this context. Be concise, helpful, and friendly. If the question is unrelated to the note, you can still answer but mention it's outside the note's scope.\n\n--- NOTE CONTENT ---\n${noteContext}\n--- END NOTE CONTENT ---`
+            });
+        } else {
+            apiMessages.push({
+                role: 'system',
+                content: 'You are Lumina AI, a helpful, friendly, and knowledgeable assistant integrated into a notes application called "Lumina Notes". Help users with any questions they have. Be concise and informative. Use markdown formatting when appropriate for code blocks, lists, and emphasis.'
+            });
+        }
+
+        const recentMessages = messages.slice(-20);
+        recentMessages.forEach(msg => {
+            apiMessages.push({
+                role: msg.role === 'user' ? 'user' : 'assistant',
+                content: msg.content
+            });
+        });
+
+        const reply = await callMistralAPI(apiKey, apiMessages);
+        res.json({ reply });
+
+    } catch (err) {
+        console.error('AI Chat Error:', err);
+        res.status(500).json({ error: 'Failed to get AI response. Please try again.' });
+    }
 });
 
 // Database Connection
